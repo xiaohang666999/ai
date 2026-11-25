@@ -1,0 +1,52 @@
+# Build output (rebuilt by pack.ps1 / go build, never committed)
+xehn.exe
+warp-client.exe
+warp-client-gui.exe
+/dist/
+*.zip
+
+# Runtime state, preferences and credentials.
+# warpscout-account.json holds this device's WARP account private key: it must
+# never leave the machine it was registered on.
+warpscout-account.json
+state.json
+settings.json
+cache.json
+control-state.json
+
+# Bundled third-party runtimes and their data (80+ MB of binaries, not sources).
+# core/client.config also carries real Psiphon service credentials.
+# Root-anchored on purpose: a bare "core/" would also hide internal/core/,
+# which is source.
+/core/
+/psiphon-data/
+
+# Logs
+*.log
+
+# Generated probe/test configs
+psiphon-test-config.yaml
+split-direct-test.yaml
+split-proxy-test.yaml
+routing-*-test.yaml
+
+# VPN Gate runtime state: cached relay lists embed live OpenVPN profiles and
+# private keys, so they never belong in the repository.
+vpngate-*.json
+warp-report-*.txt
+health-owner
+
+# Local module cache used for the offline build
+.gomod/
+
+# Internal engineering notes — deliberately not published
+PSIPHON_*.md
+*_AUDIT*.md
+
+# Editor / OS noise
+.warp-portable
+.DS_Store
+Thumbs.db
+
+# go-winres output, rebuilt by pack.ps1
+rsrc_windows_amd64.syso
