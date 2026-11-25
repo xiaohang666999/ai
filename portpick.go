@@ -58,7 +58,7 @@ func ensureCorePort(preferred int, bin, what string) int {
 	if n := core.KillStaleCores(bin); n > 0 {
 		stageMsg(fmt.Sprintf("清理了 %d 个残留内核进程（占用 %s端口 %d）", n, what, preferred))
 	}
-	// A core left by an EARLIER XEHN folder (the usual update flow extracts a
+	// A core left by an EARLIER VEGSH folder (the usual update flow extracts a
 	// new one) has a different image path, so the exact-path sweep above cannot
 	// see it. Only runs when a port is actually taken, so a healthy
 	// single-instance start never touches another copy's core.

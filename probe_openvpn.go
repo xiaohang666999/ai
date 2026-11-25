@@ -190,7 +190,7 @@ func normalizeProbeConfig(cfg ProbeConfig) (ProbeConfig, func()) {
 	cleanup := func() {}
 	if cfg.WorkDir == "" {
 		// 绝不落到 core/（那里有线上正在运行的 config.yaml）。
-		if dir, err := os.MkdirTemp("", "xehn-openvpn-probe-"); err == nil {
+		if dir, err := os.MkdirTemp("", "vegsh-openvpn-probe-"); err == nil {
 			cfg.WorkDir = dir
 			cleanup = func() { _ = os.RemoveAll(dir) }
 		}

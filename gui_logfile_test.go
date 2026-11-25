@@ -9,12 +9,12 @@ import (
 	"testing"
 )
 
-// TestTrimLogFileShrinksOversizedLog pins the disk-side cap: xehn.log is opened
+// TestTrimLogFileShrinksOversizedLog pins the disk-side cap: vegsh.log is opened
 // for append and inherited by the core, so without this a long-lived install
 // accumulates the core's chatter indefinitely.
 func TestTrimLogFileShrinksOversizedLog(t *testing.T) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, "xehn.log")
+	path := filepath.Join(dir, "vegsh.log")
 
 	// ~10MB of numbered lines, so the trim point lands mid-line.
 	var b strings.Builder
@@ -52,7 +52,7 @@ func TestTrimLogFileShrinksOversizedLog(t *testing.T) {
 // normal session must never be truncated.
 func TestTrimLogFileLeavesSmallLogsAlone(t *testing.T) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, "xehn.log")
+	path := filepath.Join(dir, "vegsh.log")
 	body := "line one\nline two\n"
 	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
 		t.Fatal(err)

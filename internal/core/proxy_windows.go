@@ -119,7 +119,7 @@ func SetSystemProxy(port int) (*ProxySnapshot, error) {
 
 	server := fmt.Sprintf("127.0.0.1:%d", port)
 	// If the proxy already points at our mixed port, the captured "current"
-	// values are a previous xehn connect's leftovers (crash mid-connect,
+	// values are a previous vegsh connect's leftovers (crash mid-connect,
 	// or connect while connected), not the user's baseline. Restoring them on
 	// disconnect would leave the proxy enabled against a dead port; snapshot a
 	// clean no-proxy baseline instead.
@@ -664,7 +664,7 @@ func hiddenCmd(name string, args ...string) *exec.Cmd {
 // rule built with the old private,domain-only profile be replaced rather than
 // mistaken for the current one.
 func lanRuleName(port int, proto string) string {
-	return fmt.Sprintf("XEHN-LAN-v2-%d-%s", port, proto)
+	return fmt.Sprintf("VEGSH-LAN-v2-%d-%s", port, proto)
 }
 
 // coreRuleName is the program-level rule pair for the bundled core. Windows
@@ -673,8 +673,8 @@ func lanRuleName(port int, proto string) string {
 // turned on. Allowing the binary by path ends it for good, and unlike opening a
 // port it grants nothing to any other program.
 const (
-	coreRuleIn  = "XEHN-CORE-IN"
-	coreRuleOut = "XEHN-CORE-OUT"
+	coreRuleIn  = "VEGSH-CORE-IN"
+	coreRuleOut = "VEGSH-CORE-OUT"
 )
 
 // currentProfileIsPublic reports whether Windows classifies the active network
@@ -711,7 +711,7 @@ func addLanFirewallRule(port int, corePath string) error {
 		// is cleared too, so the port ends up with exactly one rule pair.
 		_ = hiddenCmd("netsh", "advfirewall", "firewall", "delete", "rule", "name="+name).Run()
 		_ = hiddenCmd("netsh", "advfirewall", "firewall", "delete", "rule",
-			"name="+fmt.Sprintf("XEHN-LAN-%d-%s", port, proto)).Run()
+			"name="+fmt.Sprintf("VEGSH-LAN-%d-%s", port, proto)).Run()
 		out, err := hiddenCmd("netsh", "advfirewall", "firewall", "add", "rule",
 			"name="+name,
 			"dir=in",
@@ -769,7 +769,7 @@ func lanRuleExistsV2(port int) bool { return ruleExists(lanRuleName(port, "TCP")
 // lanPortRuleExists also accepts the v1 name a previous build wrote, so an
 // upgrade on a private network does not ask for elevation again.
 func lanPortRuleExists(port int) bool {
-	return lanRuleExistsV2(port) || ruleExists(fmt.Sprintf("XEHN-LAN-%d-TCP", port))
+	return lanRuleExistsV2(port) || ruleExists(fmt.Sprintf("VEGSH-LAN-%d-TCP", port))
 }
 
 // EnsureLanFirewall makes the mixed port reachable from the LAN and stops the

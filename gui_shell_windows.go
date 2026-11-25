@@ -219,7 +219,7 @@ func (u *natUI) paintSidebar(c *walk.Canvas) {
 	nameY := 20 + logoH + 12
 
 	ver := shortVersion()
-	nameW := float64(u.measure(c, "XEHN", u.f.f18b)) / u.k
+	nameW := float64(u.measure(c, "VEGSH", u.f.f18b)) / u.k
 	verW := float64(u.measure(c, ver, u.f.f8))/u.k + 16
 	// Dev builds carry long version strings; the pill must never overflow the
 	// rail, so ellipsize it into the width available on its own line.
@@ -232,7 +232,7 @@ func (u *natUI) paintSidebar(c *walk.Canvas) {
 		ver = string(rv) + "…"
 		verW = float64(u.measure(c, ver, u.f.f8))/u.k + 16
 	}
-	u.txt(c, (sw-nameW)/2, nameY, nameW+2, 26, "XEHN", u.f.f18b, th.text)
+	u.txt(c, (sw-nameW)/2, nameY, nameW+2, 26, "VEGSH", u.f.f18b, th.text)
 	verY := nameY + 30
 	vr := u.r((sw-verW)/2, verY, verW, 18)
 	u.fillRound(c, mix(th.sidebar, th.accent2, 0.12), vr, 9)

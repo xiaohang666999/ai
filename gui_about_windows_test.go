@@ -9,18 +9,18 @@ import "testing"
 // the body's bottom edge: a clipped footer would hide the licence sentence the
 // page exists to carry, and a card that overruns would paint over the next one.
 func TestAboutLayoutFitsBody(t *testing.T) {
-	c1, c2, c3, c4, links, footer := aboutLayout(shellBodyY)
+	c1, c2, c3, links, footer := aboutLayout(shellBodyY)
 
 	if c1 != shellBodyY {
 		t.Fatalf("first card starts at %v, want the body top %v", c1, shellBodyY)
 	}
-	for i, got := range []float64{c2, c3, c4} {
+	for i, got := range []float64{c2, c3} {
 		want := c1 + float64(i+1)*(aboutCardH+aboutGap)
 		if got != want {
 			t.Fatalf("card %d starts at %v, want %v", i+2, got, want)
 		}
 	}
-	if want := c4 + aboutCardH + aboutGap; links != want {
+	if want := c3 + aboutCardH + aboutGap; links != want {
 		t.Fatalf("link card starts at %v, want %v", links, want)
 	}
 	if want := links + aboutLinkH + aboutFootG; footer != want {

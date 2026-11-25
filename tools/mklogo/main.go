@@ -9,7 +9,7 @@
 //     rsrc embeds into the exe so Explorer shows it as the program icon. Each
 //     frame pads the mark into a transparent square so the icon is not stretched.
 //
-// Usage (from the xehn directory):
+// Usage (from the vegsh directory):
 //
 //	go run ./tools/mklogo -src ../../ui-mockups/logo-mark.png -png assets/logo.png -ico logo.ico
 package main

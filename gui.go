@@ -86,7 +86,7 @@ func redirectLogs() {
 	if err != nil {
 		return
 	}
-	logPath := filepath.Join(home, "xehn.log")
+	logPath := filepath.Join(home, "vegsh.log")
 	trimLogFile(logPath)
 	f, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
 	if err != nil {
@@ -131,7 +131,7 @@ func ensurePortableHome() {
 // back to %APPDATA%, which is the single most common reason a perfectly good
 // bundled core is not found on first launch.
 func dirWritable(dir string) bool {
-	p := filepath.Join(dir, ".xehn-write-probe")
+	p := filepath.Join(dir, ".vegsh-write-probe")
 	if err := os.WriteFile(p, nil, 0o644); err != nil {
 		return false
 	}
@@ -146,7 +146,7 @@ func dirWritable(dir string) bool {
 // message. One log block makes them distinguishable without asking the user
 // to reproduce anything.
 // syncBundledResources fixes the read-only-install case: ensurePortableHome
-// falls back to %APPDATA%\xehn when the exe's folder cannot be written, which
+// falls back to %APPDATA%\vegsh when the exe's folder cannot be written, which
 // used to hide the perfectly good core/ and geodata shipped next to the exe.
 // Instead of forcing every write into a protected folder, copy the read-only
 // resources into the writable data dir once. Only missing/empty files are

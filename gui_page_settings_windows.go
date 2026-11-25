@@ -584,20 +584,31 @@ func (u *natUI) paintSetExit(c *walk.Canvas, x, y, w float64) {
 // ---------------------------------------------------------------------------
 
 // aboutLink is one clickable row of the link card: the label the user reads and
-// the address the row opens. Every one of them is a GitHub URL — the About page
-// never points at a folder on this disk, because a path is useless to anyone
-// reading the page on another machine (or on a screenshot).
+// the address the row opens. Every row is an upstream open-source project the
+// client is built on — the card never names this project's own home, and never
+// points at a folder on this disk: a path is useless to anyone reading the page
+// on another machine (or on a screenshot).
 type aboutLink struct {
 	id, label, url string
 }
 
+// aboutLinkURL resolves a link-card row id to its address.
+func aboutLinkURL(id string) (string, bool) {
+	for _, ln := range aboutLinks() {
+		if ln.id == id {
+			return ln.url, true
+		}
+	}
+	return "", false
+}
+
 func aboutLinks() []aboutLink {
 	return []aboutLink{
-		{"about:project", tr("项目主页"), repoURL},
-		{"about:releases", tr("发布页"), repoReleasesURL},
-		{"about:issues", tr("问题反馈"), repoIssuesURL},
-		{"about:notices", tr("第三方声明"), repoNoticesURL},
-		{"about:license", tr("许可全文"), repoLicenseURL},
+		{"about:core", tr("mihomo 内核"), coreRepoURL},
+		{"about:awg", tr("AmneziaWG"), "https://github.com/amnezia-vpn/amneziawg-go"},
+		{"about:walk", tr("lxn/walk"), "https://github.com/lxn/walk"},
+		{"about:warpscout", tr("warpscout 扫描引擎"), "https://github.com/vernette/warpscout"},
+		{"about:psiphon", tr("Psiphon"), "https://github.com/Psiphon-Labs/psiphon-tunnel-core"},
 	}
 }
 
@@ -605,12 +616,12 @@ func aboutLinks() []aboutLink {
 // card's value column, and "github.com/…" still reads as a link.
 func shortURL(u string) string { return strings.TrimPrefix(u, "https://") }
 
-// The About page is a single-column stack: one card per row, then the link card,
-// then a two-line footer. The page does not scroll, so every row is sized from
-// these constants and aboutLayout is asserted to end above the body box.
+// The About page is a single-column stack: three cards, then the link card, then
+// a two-line footer. The page does not scroll, so every row is sized from these
+// constants and aboutLayout is asserted to end above the body box.
 //
 // One card per row is what the page needed: at two columns each card was ~420
-// wide, which forced the action buttons to share the bottom edge and made four
+// wide, which forced the action buttons to share the bottom edge and made the
 // blocks of colour compete. Full width lets the fields sit in two columns with
 // the actions on the title line.
 const (
@@ -630,12 +641,11 @@ const (
 
 // aboutLayout returns the top of each card, of the link card and of the footer,
 // in design units, for the body's own top edge.
-func aboutLayout(bodyY float64) (card1, card2, card3, card4, links, footer float64) {
+func aboutLayout(bodyY float64) (card1, card2, card3, links, footer float64) {
 	card1 = bodyY
 	card2 = card1 + aboutCardH + aboutGap
 	card3 = card2 + aboutCardH + aboutGap
-	card4 = card3 + aboutCardH + aboutGap
-	links = card4 + aboutCardH + aboutGap
+	links = card3 + aboutCardH + aboutGap
 	footer = links + aboutLinkH + aboutFootG
 	return
 }
@@ -708,7 +718,7 @@ func (u *natUI) aboutStrip(c *walk.Canvas, x, y, w float64, title string, fields
 }
 
 func (u *natUI) paintAbout(c *walk.Canvas, x, y, w float64) {
-	card1, card2, card3, card4, links, footer := aboutLayout(y)
+	card1, card2, card3, links, footer := aboutLayout(y)
 
 	u.aboutStrip(c, x, card1, w, tr("本程序"), [][2]string{
 		{tr("名称"), productName},
@@ -717,7 +727,6 @@ func (u *natUI) paintAbout(c *walk.Canvas, x, y, w float64) {
 		{tr("核心版本"), orEmpty(u.m.coreVersion, tr("未探测"))},
 	},
 		aboutAct{"about:copydiag", tr("复制诊断信息"), false, true},
-		aboutAct{"about:project", tr("打开项目主页"), true, true},
 	)
 
 	u.aboutStrip(c, x, card2, w, tr("开源与许可"), [][2]string{
@@ -726,42 +735,13 @@ func (u *natUI) paintAbout(c *walk.Canvas, x, y, w float64) {
 		{tr("协议引擎"), "WireGuard / AmneziaWG / MASQUE"},
 		{tr("内核来源"), shortURL(coreRepoURL + "/releases")},
 	},
-		aboutAct{"upd:refresh", tr("重新探测内核"), false, !u.m.coreBusy},
-		aboutAct{"upd:core", tr("检查/下载内核"), true, !u.m.coreBusy},
+		aboutAct{"core:refresh", tr("重新探测内核"), false, !u.m.coreBusy},
+		aboutAct{"core:download", tr("检查/下载内核"), true, !u.m.coreBusy},
 	)
-
-	updID, updLabel := "upd:check", tr("检查更新")
-	if u.m.updAvail != "" {
-		updID, updLabel = "upd:install", trf("立即更新到 v%s", u.m.updAvail)
-	}
-	u.aboutStrip(c, x, card3, w, tr("客户端更新"), [][2]string{
-		{tr("当前版本"), versionWithBuild()},
-		{tr("最新版本"), orEmpty(u.m.updLatest, tr("尚未检查"))},
-		{tr("状态"), orEmpty(u.m.updNote, tr("点击右侧按钮检查更新"))},
-	},
-		aboutAct{"about:releases", tr("打开发布页"), false, true},
-		aboutAct{updID, updLabel, true, !u.m.updBusy},
-	)
-
-	stText, stColor := u.controlStatus()
-	u.aboutStrip(c, x, card4, w, tr("远程控制"), [][2]string{
-		{tr("控制码"), orEmpty(u.m.set.ControlCode, tr("未知"))},
-		{tr("最近检查"), controlCheckedText(u.m.control)},
-	},
-		aboutAct{"about:copycode", tr("复制控制码"), false, true},
-		aboutAct{"about:checkcontrol", tr("立即检查"), true, !u.m.controlBusy},
-	)
-	// The verdict has its own colour (green / amber / red), so it is painted by
-	// hand into the second field row's left cell instead of going through the
-	// neutral strip text.
-	colW := (w - 32 - aboutFieldGap) / 2
-	stY := card4 + 34 + aboutKVStep
-	u.txt(c, x+16, stY, aboutFieldCol, 20, tr("状态"), u.f.f9, th.dim)
-	u.txt(c, x+16+aboutFieldCol, stY, colW-aboutFieldCol, 20, stText, u.f.f9, stColor)
 
 	// The link card: one address per row, full width, the whole row clickable.
 	u.cardPlain(c, x, links, w, aboutLinkH)
-	u.txt(c, x+16, links+8, 200, 22, tr("项目链接"), u.f.f11b, th.text)
+	u.txt(c, x+16, links+8, 200, 22, tr("开源项目"), u.f.f11b, th.text)
 	for i, ln := range aboutLinks() {
 		ly := links + 34 + float64(i)*aboutLinkStep
 		r := u.r(x+10, ly-1, w-20, aboutLinkStep-2)
@@ -776,8 +756,8 @@ func (u *natUI) paintAbout(c *walk.Canvas, x, y, w float64) {
 		u.addSpot(ln.id, r, true)
 	}
 
-	// Footer: the same sentence the startup notice opens with, kept on the page
-	// so it is still there after the notice has been dismissed.
+	// Footer: the licence sentence and the disclaimer live on the page itself —
+	// this is now the only place a launch shows them.
 	yf := footer
 	u.hline(c, x, yf-7, w, th.line2)
 	u.txt(c, x+2, yf, w-4, 18, tr("本软件开源免费，仅供学习交流使用，禁止售卖！"), u.f.f10, th.text)
@@ -786,28 +766,3 @@ func (u *natUI) paintAbout(c *walk.Canvas, x, y, w float64) {
 		u.f.f8, th.dim)
 }
 
-// controlStatus is the About card's verdict line: stopped outranks everything,
-// then "checked and fine", then "never reached the list".
-func (u *natUI) controlStatus() (string, walk.Color) {
-	switch {
-	case u.m.control.Stopped:
-		return tr("已停用"), th.warn
-	case u.m.control.Reached:
-		return tr("正常"), th.ok
-	default:
-		return tr("未检查"), th.dim
-	}
-}
-
-// controlCheckedText renders the last check as a compact timestamp, and says so
-// when that check never got an answer.
-func controlCheckedText(st controlState) string {
-	if st.CheckedAt.IsZero() {
-		return tr("尚未检查")
-	}
-	s := st.CheckedAt.Format("01-02 15:04")
-	if !st.Reached {
-		s += " · " + tr("未连上")
-	}
-	return s
-}

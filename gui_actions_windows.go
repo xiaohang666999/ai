@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -18,7 +16,7 @@ import (
 // actionPages routes every id that is not part of the connect pipeline (which
 // action() handles). The prefixes are the contract between a paint function and
 // this file: nav:, theme:, lang:, ruletab:, settab:, logtab:, mode:, node
-// filter/sort, star:, set:, about:, upd:, go:.
+// filter/sort, star:, set:, about:, go:.
 func (u *natUI) actionPages(id string) {
 	m := u.m
 	switch {
@@ -97,73 +95,13 @@ func (u *natUI) actionPages(id string) {
 		u.actionSetting(id)
 	case strings.HasPrefix(id, "about:"):
 		u.actionAbout(id)
-	case strings.HasPrefix(id, "upd:"):
-		u.actionUpdate(id)
+	case id == "core:download":
+		u.doCore()
+	case id == "core:refresh":
+		resetCoreCapabilityCache()
+		u.addLog(tr("重新探测内核…"), false)
+		go u.probeCore()
 	}
-}
-
-// startUpdate downloads and installs the version the last check found. The
-// transfer runs off-thread; the swap and the restart come back to the GUI
-// thread, because closing the window from a worker would race the teardown.
-func (u *natUI) startUpdate() {
-	if u.m.updBusy || u.m.updAvail == "" {
-		return
-	}
-	u.m.updBusy = true
-	u.m.updNote = trf("正在下载 v%s…", u.m.updAvail)
-	u.invalidate()
-	go func() {
-		rel, err := fetchLatestRelease(u.ctx)
-		var staged string
-		if err == nil {
-			staged, err = downloadUpdate(u.ctx, rel, func(line string) {
-				u.sync(func() { u.addLog(line, false) })
-			})
-		}
-		u.sync(func() {
-			u.m.updBusy = false
-			if err != nil {
-				u.m.updNote = tr("更新失败")
-				u.addLog(tr("更新失败: ")+err.Error(), true)
-				u.invalidate()
-				u.infoDialog(tr("更新失败"), err.Error(), []string{tr("可到发布页手动下载")})
-				return
-			}
-			u.finishUpdate(staged)
-		})
-	}()
-}
-
-// finishUpdate swaps the staged program in and restarts. The window is closed
-// afterwards, which runs the normal teardown — system proxy restored, core
-// stopped, health ownership released — so the new instance starts clean.
-func (u *natUI) finishUpdate(staged string) {
-	exe, err := os.Executable()
-	if err != nil {
-		u.addLog(tr("更新失败: ")+err.Error(), true)
-		return
-	}
-	if abs, aerr := filepath.Abs(exe); aerr == nil {
-		exe = abs
-	}
-	if u.m.connected && !u.m.working {
-		u.doDisconnect()
-	}
-	if err := applyUpdate(exe); err != nil {
-		u.m.updNote = tr("更新失败")
-		u.addLog(tr("更新失败: ")+err.Error(), true)
-		u.invalidate()
-		u.infoDialog(tr("更新失败"), err.Error(), []string{tr("请关闭其它正在运行的实例后重试")})
-		return
-	}
-	_ = staged
-	u.m.updNote = tr("更新完成，正在重启…")
-	u.addLog(tr("更新完成，正在重启…"), false)
-	u.invalidate()
-	if err := restartDetached(exe); err != nil {
-		u.addLog(tr("自动重启失败，请手动打开程序"), true)
-	}
-	u.mw.Close()
 }
 
 // startGeoDownload fetches the geo databases the bypass preset needs and then
@@ -456,7 +394,7 @@ func (u *natUI) syncSessionFromSettings() {
 }
 
 // ---------------------------------------------------------------------------
-// About / update
+// About
 // ---------------------------------------------------------------------------
 
 func (u *natUI) actionAbout(id string) {
@@ -467,82 +405,14 @@ func (u *natUI) actionAbout(id string) {
 		} else {
 			u.addLog(tr("诊断信息已复制到剪贴板"), false)
 		}
-	case "about:copycode":
-		// The code is what the maintainer needs to stop (or un-stop) this
-		// install, so copying it beats asking the user to retype 16 characters.
-		if err := setClipboardText(u.m.set.ControlCode); err != nil {
-			u.addLog(tr("复制失败")+": "+err.Error(), true)
-		} else {
-			u.addLog(tr("控制码已复制到剪贴板"), false)
-		}
-	case "about:checkcontrol":
-		u.startControlCheck(true)
 	case "about:opendata":
 		// Still used by the Logs page's diagnostics tab.
 		u.openDataDir()
-	case "about:project":
-		openURL(repoURL)
-	case "about:releases":
-		openURL(repoReleasesURL)
-	case "about:issues":
-		openURL(repoIssuesURL)
-	case "about:notices":
-		openURL(repoNoticesURL)
-	case "about:license":
-		openURL(repoLicenseURL)
 	}
-}
-
-func (u *natUI) actionUpdate(id string) {
-	switch id {
-	case "upd:check":
-		if u.m.updBusy {
-			return
-		}
-		u.m.updBusy = true
-		u.m.updNote = tr("正在检查…")
-		u.invalidate()
-		go func() {
-			// fetchLatestVersion, not latestVersion: a manual check must not be
-			// answered from the 6h cache, or the button would lie.
-			latest, answered := fetchLatestVersion(u.ctx)
-			u.sync(func() {
-				u.m.updBusy = false
-				u.m.updChecked = true
-				u.m.updTime = time.Now()
-				switch {
-				case !answered:
-					u.m.updLatest = ""
-					u.m.updAvail = ""
-					u.m.updNote = tr("检查失败：发布页不可达（网络受限或 GitHub 被拦截）")
-				case latest == "":
-					// The repository answered and has no releases yet: saying
-					// "unreachable" here would blame the network for a version
-					// that simply does not exist.
-					u.m.updLatest = ""
-					u.m.updAvail = ""
-					u.m.updNote = tr("发布页还没有 Release，可到项目主页查看进度")
-				default:
-					u.m.updLatest = latest
-					if newerVersion(latest, resolveVersion()) {
-						u.m.updAvail = latest
-						u.m.updNote = trf("发现新版本 v%s，点「立即更新」直接安装", latest)
-					} else {
-						u.m.updAvail = ""
-						u.m.updNote = tr("已是最新版本")
-					}
-				}
-				u.invalidate()
-			})
-		}()
-	case "upd:install":
-		u.startUpdate()
-	case "upd:core":
-		u.doCore()
-	case "upd:refresh":
-		resetCoreCapabilityCache()
-		u.addLog(tr("重新探测内核…"), false)
-		go u.probeCore()
+	// The link card's rows are upstream projects; opening one is the same
+	// action whatever the row, so they share the branch below.
+	if url, ok := aboutLinkURL(id); ok {
+		openURL(url)
 	}
 }
 

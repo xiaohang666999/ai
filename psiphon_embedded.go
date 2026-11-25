@@ -88,7 +88,7 @@ func (p *Psiphon) startEmbedded(ctx context.Context, l psiphonLaunch) error {
 	p.mu.Unlock()
 
 	// NetworkID is mandatory for tunnel-core; the value only tags statistics.
-	networkID := "XEHN"
+	networkID := "VEGSH"
 	platform := "Windows"
 	establishTimeout := 60
 	params := clientlib.Parameters{

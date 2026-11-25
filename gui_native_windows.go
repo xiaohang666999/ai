@@ -196,23 +196,8 @@ type natModel struct {
 
 	// set is the persisted preference file, kept in the model so every page
 	// renders straight from it.
-	set       clientSettings
-	setDirty  bool // a setting changed while connected: reconnect applies it
-	updLatest string
-	// updAvail is the version a completed check found to be newer; when it is
-	// set the update card's primary button installs it instead of checking.
-	updAvail   string
-	updChecked bool
-	updTime    time.Time
-	updBusy    bool
-	updNote    string
-
-	// Remote control: this install's code lives in the settings file, and
-	// control is the last verdict read from the published stop list. The
-	// verdict is cached on disk, so a restart cannot quietly put a stopped
-	// client back into service while the network is unreachable.
-	control     controlState
-	controlBusy bool
+	set      clientSettings
+	setDirty bool // a setting changed while connected: reconnect applies it
 
 	// geoBusy is true while the geo databases the bypass preset needs are
 	// downloading, so a second click cannot start a second transfer.
@@ -301,11 +286,6 @@ type natUI struct {
 	// candidate - and two repairs at once means two sets of core kills,
 	// state writes and proxy changes interleaved on one session.
 	repairing atomic.Bool
-
-	// controlChecking serialises the remote-control check: the periodic loop
-	// and the About page's button can fire at the same moment, and two checks
-	// racing on one cached verdict would let the slower (stale) answer win.
-	controlChecking atomic.Bool
 
 	// rescanBusy keeps a burst of clicks on the refresh button (or a click
 	// landing while the frame is redrawn) from starting several 1-2 minute
@@ -427,7 +407,7 @@ func runNativeGUI(ctx context.Context, _ options) error {
 	if sb := mw.StatusBar(); sb != nil {
 		sb.SetVisible(false)
 	}
-	mw.SetTitle("XEHN VPN Client")
+	mw.SetTitle("VEGSH VPN Client")
 	// Design units are 96-DPI logical pixels, so the initial client is scaled by
 	// the display DPI: on a 200% screen the same window would otherwise open at
 	// half its intended apparent size with tiny text. fitDesignWindow caps and
@@ -459,12 +439,6 @@ func runNativeGUI(ctx context.Context, _ options) error {
 	// user chose last time. Autostart is read back from the registry rather
 	// than trusted from the file: the registry is what actually launches the
 	// program, and a value removed by hand must not keep showing as "on".
-	// A leftover .new means an earlier update never finished; a leftover .old
-	// means it did and this is the new binary. Either way, clear them.
-	if exe, eerr := os.Executable(); eerr == nil {
-		cleanupUpdateLeftovers(exe)
-	}
-
 	u.m.set = loadSettings()
 	// A previous session that was killed from Task Manager (or crashed) never
 	// got to put WinINET back, and the browser then stays pointed at a port
@@ -474,19 +448,6 @@ func runNativeGUI(ctx context.Context, _ options) error {
 	u.m.set.AutoStart = autoStartEnabled()
 	u.syncSessionFromSettings()
 
-	// Every install carries a control code from its first run: it is what the
-	// published stop list matches against, so it has to exist before the first
-	// check. Minting it here (not in the settings page) means a client that
-	// never opens Settings still reports an identity.
-	if u.m.set.ensureControlCode() {
-		if err := saveSettings(u.m.set); err != nil {
-			u.addLog(tr("设置保存失败: ")+err.Error(), true)
-		}
-	}
-	// The cached verdict is applied before any network call: a client stopped
-	// last run stays stopped even when this run starts offline.
-	u.m.control = loadControlState()
-	u.m.control.Code = u.m.set.ControlCode
 	u.applyTheme()
 	u.applyLang()
 
@@ -592,17 +553,6 @@ func runNativeGUI(ctx context.Context, _ options) error {
 	u.constrainWindowToWorkArea()
 	u.setWindowIcon()
 	u.invalidate()
-
-	// The licence reminder comes first: it is a condition of using this build,
-	// and it must not be buried under an auto-connect pipeline or a scan.
-	u.showStartupNotice()
-	if u.m.control.Stopped {
-		u.controlStoppedDialog()
-	}
-	// Check once now (the cached verdict may be hours old), then keep checking
-	// for as long as the window lives.
-	u.startControlCheck(false)
-	go u.controlLoop()
 
 	// Auto-connect starts here, after the window exists: the connect pipeline
 	// posts its progress through Synchronize, which is a PostMessage and simply
@@ -817,72 +767,8 @@ func enableDPIAwareness() {
 // Workers
 // ---------------------------------------------------------------------------
 
-// controlLoop re-reads the published stop list while the window is open: a
-// session running when its code gets stopped is torn down on the next tick,
-// not on the next restart.
-func (u *natUI) controlLoop() {
-	t := time.NewTicker(controlCheckEvery)
-	defer t.Stop()
-	for {
-		select {
-		case <-u.ctx.Done():
-			return
-		case <-t.C:
-			u.sync(func() { u.startControlCheck(false) })
-		}
-	}
-}
-
-// startControlCheck runs on the GUI thread: it touches the model, then hands
-// the fetch to a worker that reports back through sync. manual is the About
-// page's button — only a manual check reports an unreachable list, because a
-// periodic one saying "still offline" every quarter hour is just noise.
-func (u *natUI) startControlCheck(manual bool) {
-	if !u.controlChecking.CompareAndSwap(false, true) {
-		return
-	}
-	u.m.controlBusy = true
-	u.invalidate()
-	code := u.m.set.ControlCode
-	prev := u.m.control
-	go func() {
-		st := evaluateControl(u.ctx, code, prev)
-		u.sync(func() {
-			u.controlChecking.Store(false)
-			u.m.controlBusy = false
-			wasStopped := u.m.control.Stopped
-			u.m.control = st
-			if err := saveControlState(st); err != nil {
-				u.addLog(tr("远程控制状态保存失败")+": "+err.Error(), true)
-			}
-			switch {
-			case st.Stopped && !wasStopped:
-				u.addLog(tr("远程控制：本机控制码已被停用"), true)
-				if u.m.connected && !u.m.working {
-					u.doDisconnect()
-				}
-				u.controlStoppedDialog()
-			case st.Stopped:
-				// Already known: keep a live session down, but do not repeat
-				// the dialog on every tick.
-				if u.m.connected && !u.m.working {
-					u.doDisconnect()
-				}
-				if manual {
-					u.controlStoppedDialog()
-				}
-			case manual && !st.Reached:
-				u.addLog(tr("远程控制：停用名单不可达（网络受限），沿用上次结果"), true)
-			case manual:
-				u.addLog(tr("远程控制：控制码正常"), false)
-			}
-			u.invalidate()
-		})
-	}()
-}
-
 // guardLogLoop mirrors the detached health guard's findings into the log panel.
-// The guard is a separate process whose stderr lands in xehn.log, not in this
+// The guard is a separate process whose stderr lands in vegsh.log, not in this
 // window's in-memory log; without this mirror a guard-driven repair or give-up
 // flips the home tile to "disconnected" with no explanation on screen (the
 // "connected then disconnected, but the log says nothing" report). Only lines
@@ -893,7 +779,7 @@ func (u *natUI) guardLogLoop() {
 	if err != nil {
 		return
 	}
-	path := filepath.Join(home, "xehn.log")
+	path := filepath.Join(home, "vegsh.log")
 	var offset int64
 	if fi, serr := os.Stat(path); serr == nil {
 		offset = fi.Size()
@@ -1679,12 +1565,12 @@ func (u *natUI) exitV6OK() bool {
 // two causes look identical in a log line but need different fixes.
 func coreMissingHint(dir, bin string) string {
 	if _, err := os.Stat(dir); err != nil {
-		return tr("内核缺失：当前目录下没有 core 文件夹。请解压整个压缩包后再运行 xehn.exe（不要只把 exe 单独拿出来）。")
+		return tr("内核缺失：当前目录下没有 core 文件夹。请解压整个压缩包后再运行 vegsh.exe（不要只把 exe 单独拿出来）。")
 	}
 	if fi, err := os.Stat(bin); err == nil && fi.Size() == 0 {
 		return tr("内核文件 core\\mihomo.exe 是 0 字节（下载或解压中断），请删掉它后用底栏「核心」按钮重新下载。")
 	}
-	return tr("内核缺失：core\\mihomo.exe 不存在。多数情况是被杀毒软件隔离，请把 XEHN 目录加入白名单后，用底栏「核心」按钮重新下载。")
+	return tr("内核缺失：core\\mihomo.exe 不存在。多数情况是被杀毒软件隔离，请把 VEGSH 目录加入白名单后，用底栏「核心」按钮重新下载。")
 }
 
 func (u *natUI) probeCore() {
@@ -1713,7 +1599,7 @@ func (u *natUI) probeCore() {
 			// A file that exists but cannot be executed is almost always a
 			// security product or Smart App Control, not a broken download.
 			// Give the exact recovery steps instead of the generic "请升级核心".
-			u.addLog(tr("核心文件存在却无法运行时：请把 XEHN 目录加入杀毒软件白名单；右键 xehn.exe 与 core\\mihomo.exe → 属性 → 勾选「解除锁定」；Windows 安全中心检查「智能应用控制」是否拦截。完成后重启程序"), true)
+			u.addLog(tr("核心文件存在却无法运行时：请把 VEGSH 目录加入杀毒软件白名单；右键 vegsh.exe 与 core\\mihomo.exe → 属性 → 勾选「解除锁定」；Windows 安全中心检查「智能应用控制」是否拦截。完成后重启程序"), true)
 		} else {
 			var ok []string
 			for _, r := range protoRuns {
@@ -2221,13 +2107,6 @@ func (u *natUI) action(id string) {
 func (u *natUI) doConnect() {
 	m := u.m
 	if m.connecting || m.working {
-		return
-	}
-	// The stop list is the one thing that outranks the button: a stopped code
-	// explains itself instead of starting a pipeline that would fail anyway.
-	if m.control.Stopped {
-		u.addLog(tr("远程控制：客户端已停用，无法连接"), true)
-		u.controlStoppedDialog()
 		return
 	}
 	m.connecting = true

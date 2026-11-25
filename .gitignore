@@ -1,5 +1,5 @@
 # Build output (rebuilt by pack.ps1 / go build, never committed)
-xehn.exe
+vegsh.exe
 warp-client.exe
 warp-client-gui.exe
 /dist/
@@ -12,7 +12,6 @@ warpscout-account.json
 state.json
 settings.json
 cache.json
-control-state.json
 
 # Bundled third-party runtimes and their data (80+ MB of binaries, not sources).
 # core/client.config also carries real Psiphon service credentials.

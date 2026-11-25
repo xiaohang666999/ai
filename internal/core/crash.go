@@ -19,13 +19,13 @@ func (e *CrashError) Error() string {
 func (e *CrashError) Hint() string {
 	switch e.Code {
 	case 0xC0000005:
-		return "通常是安全软件拦截/注入，或内核文件损坏。请把 XEHN 目录加入杀毒白名单后重试；仍然失败就在设置页重新下载内核。"
+		return "通常是安全软件拦截/注入，或内核文件损坏。请把 VEGSH 目录加入杀毒白名单后重试；仍然失败就在设置页重新下载内核。"
 	case 0xC000001D:
 		return "CPU 不支持该内核使用的指令集。请在设置页重新下载内核（新版会按 CPU 能力构建）。"
 	case 0xC0000135, 0xC0000142:
 		return "缺少或无法加载系统 DLL。请安装最新的 Visual C++ 运行库/系统更新后重试。"
 	case 0xC0000409:
-		return "触发栈保护，常见于安全软件的注入或拦截。请把 XEHN 目录加入白名单后重试。"
+		return "触发栈保护，常见于安全软件的注入或拦截。请把 VEGSH 目录加入白名单后重试。"
 	}
 	return "内核进程启动即退出。请检查安全软件拦截记录，或重新下载内核。"
 }

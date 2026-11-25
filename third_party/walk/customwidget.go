@@ -194,7 +194,7 @@ func (cw *CustomWidget) bufferedPaint(canvas *Canvas, updateBounds Rectangle) er
 	if _, err := buffered.init(); err != nil {
 		return err
 	}
-	// XEHN patch: the buffered canvas is abandoned each frame, so any metafile
+	// Local fix: the buffered canvas is abandoned each frame, so any metafile
 	// MeasureTextPixels lazily creates on it (measureTextMetafile) was never
 	// closed/deleted — one enhanced metafile (GDI handle + memory) leaked per
 	// repaint until the process hit its 10000-handle GDI quota and all drawing

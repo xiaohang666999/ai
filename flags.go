@@ -116,7 +116,7 @@ type options struct {
 	earlyStop int
 
 	// Psiphon exit mode (V1): run an external Psiphon executable that exposes a
-	// localhost SOCKS5 proxy; xehn routes mihomo's egress through it.
+	// localhost SOCKS5 proxy; vegsh routes mihomo's egress through it.
 	// psiphonSocksPort is filled at runtime from the ListeningSocksProxyPort
 	// notice and is not a user-facing flag.
 	psiphonMode      bool
@@ -868,10 +868,10 @@ func applyDNS(o *options) {
 func rootUsage(w io.Writer) {
 	st := newConStyles(lipgloss.NewRenderer(w))
 
-	fmt.Fprintln(w, st.title.Render("xehn")+" - WARP endpoint scanner & one-click AmneziaWG/WireGuard/MASQUE client")
+	fmt.Fprintln(w, st.title.Render("vegsh")+" - WARP endpoint scanner & one-click AmneziaWG/WireGuard/MASQUE client")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, st.title.Render("Usage:"))
-	fmt.Fprintf(w, "  %s <command> [options]\n", st.accent.Render("xehn"))
+	fmt.Fprintf(w, "  %s <command> [options]\n", st.accent.Render("vegsh"))
 	fmt.Fprintf(w, "\n%s\n", st.title.Render("Commands"))
 
 	col := 0
@@ -883,14 +883,14 @@ func rootUsage(w io.Writer) {
 	for _, c := range commands {
 		fmt.Fprintf(w, "  %s%s%s\n", st.accent.Render(c.name), strings.Repeat(" ", col-len(c.name)+2), c.brief)
 	}
-	fmt.Fprintf(w, "\nRun %s for the options of a command.\n", st.accent.Render("xehn <command> -h"))
-	fmt.Fprintln(w, "Start with "+st.accent.Render("xehn register")+" - every other command needs a WARP account.")
+	fmt.Fprintf(w, "\nRun %s for the options of a command.\n", st.accent.Render("vegsh <command> -h"))
+	fmt.Fprintln(w, "Start with "+st.accent.Render("vegsh register")+" - every other command needs a WARP account.")
 }
 
 func commandUsage(w io.Writer, cmd command, fs *flag.FlagSet) {
 	st := newConStyles(lipgloss.NewRenderer(w))
 
-	fmt.Fprintln(w, st.title.Render("xehn "+cmd.name)+" - "+cmd.brief)
+	fmt.Fprintln(w, st.title.Render("vegsh "+cmd.name)+" - "+cmd.brief)
 	fmt.Fprintln(w)
 	for _, line := range cmd.intro {
 		fmt.Fprintln(w, line)
@@ -901,7 +901,7 @@ func commandUsage(w io.Writer, cmd command, fs *flag.FlagSet) {
 	if len(cmd.groups) == 0 {
 		args = ""
 	}
-	fmt.Fprintf(w, "  %s%s\n", st.accent.Render("xehn "+cmd.name), args)
+	fmt.Fprintf(w, "  %s%s\n", st.accent.Render("vegsh "+cmd.name), args)
 
 	col := flagColumnWidth(cmd.groups)
 	for _, g := range cmd.groups {

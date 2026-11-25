@@ -1,13 +1,13 @@
-# XEHN
+# VEGSH
 
 A Windows client for Cloudflare WARP that scans for the best endpoint and
 connects through it in one click — built on top of
 [`vernette/warpscout`](https://github.com/vernette/warpscout)'s scanning engine
 with an embedded Clash (mihomo) core for actual traffic routing.
 
-**Download:** [latest release](https://github.com/hezhanleiok/xehn/releases/latest)
-— unzip the portable package anywhere writable and double-click
-`xehn.exe`. The package carries no account: the first connect registers
+**Download:** build it yourself (see [Build](#build)) or unzip a portable
+package from your distribution channel anywhere writable and double-click
+`vegsh.exe`. The package carries no account: the first connect registers
 a fresh WARP device for that machine.
 
 ## What it does
@@ -26,7 +26,7 @@ a fresh WARP device for that machine.
 | System-proxy mode (default)         | ✅ WinINET registry + `InternetSetOption` notify |
 | TUN global mode (optional)          | ✅ mihomo `tun:` block (needs admin; wintun is embedded) |
 | Native GUI (double-click portable)    | ✅ sidebar shell — Home/Settings/About/Logs, light+dark theme, 中文/English |
-| Licence notice + remote control       | ✅ startup notice; per-install control code checked against `control.json` |
+| Licence notice                        | ✅ About-page footer (no startup popup) |
 | Portable ZIP, core separated        | ✅ `pack.ps1` → v2rayN-style layout |
 | Core one-click download/update      | ✅ GitHub releases auto-provision |
 
@@ -34,15 +34,15 @@ a fresh WARP device for that machine.
 
 ```powershell
 # 1. unzip anywhere writable
-# 2. double-click xehn.exe  →  native window opens (Proton style)
+# 2. double-click vegsh.exe  →  native window opens (Proton style)
 # 3. click 连接 — first run auto-registers a WARP account + scans
 ```
 
 ZIP layout (`pack.ps1` assembles it):
 
 ```
-XEHN\
-├── xehn.exe             ← the only program file: double-click opens the GUI;
+VEGSH\
+├── vegsh.exe             ← the only program file: double-click opens the GUI;
 │                           arguments run the CLI in the calling terminal
 ├── core\
 │   ├── mihomo.exe        ← the Clash core — replace this file to update it
@@ -68,14 +68,14 @@ delete the folder and everything is gone.
 
 The GUI never embeds mihomo; it manages `core\mihomo.exe` as a plain file:
 
-- **One click**: dashboard → 「更新核心」 downloads the latest
+- **One click**: About page → 「检查/下载内核」 downloads the latest
   `mihomo-windows-amd64` release.
 - **Manual**: drop any mihomo build into `core\mihomo.exe` — no rebuild, no
-  version lock. `xehn.exe` also accepts `-core PATH` to point elsewhere.
+  version lock. `vegsh.exe` also accepts `-core PATH` to point elsewhere.
 
 ### The GUI
 
-`xehn.exe gui` (or a bare double-click) opens a
+`vegsh.exe gui` (or a bare double-click) opens a
 **native Windows window** — self-drawn on [`lxn/walk`](https://github.com/lxn/walk)
 (a single `CustomWidgetPixels` canvas; no browser, no webview, no runtime UI
 dependency). The layout is a 1080x700 grid scaled by the display DPI, so it
@@ -88,7 +88,7 @@ appearance switches (theme, language) so neither needs a trip to settings:
 |---|---|
 | **Home** | connect/disconnect circle with the session clock, current exit (flag, colo, latency, up/down), protocol selector with live core-capability state, selected node detail + live throughput chart |
 | **Settings** | one page, four cards: capture (system proxy or VPN/TUN, local proxy port, LAN access, API port, address family with protocol gating, MTU), routing (proxy mode, default node, split tunnelling, domain lists, geo split), startup/behaviour (autostart, auto-connect, rescan, auto-repair, remember page, timeout), DNS & exit (presets, no-DNS, Psiphon + region) |
-| **About** | versions, data/core paths, licences, client and core updates |
+| **About** | versions, data/core paths, licences, upstream project links |
 | **Logs** | run log (level-tagged console), connection history (the connect pipeline's own steps), diagnostics (copyable) |
 
 Theme: **light (default)**, dark, or follow the system — switched live, title
@@ -118,9 +118,9 @@ timeout) and DNS & exit:
 
 ![Logs](docs/screenshots/04-logs.png)
 
-The About page follows the same grid — this build, its licences, updates, the
-remote-control code, and one card of GitHub links — and is described in
-[Licence notice and remote control](#licence-notice-and-remote-control) below.
+The About page follows the same grid — this build, its licences, the core, and
+one card of upstream GitHub links — and is described in
+[Licence notice](#licence-notice) below.
 
 The same window in English (the language pill lives in the Home header, so it
 never needs a trip to settings):
@@ -139,45 +139,20 @@ cannot start.
 The GUI runs the exact same code path as the CLI
 (`defaultConnectOptions` → `runConnectCmd`), so behaviour cannot drift.
 
-### Licence notice and remote control
+### Licence notice
 
-Every launch opens with the licence reminder this project asks its builds to
-carry — **本软件开源免费，仅供学习交流使用，禁止售卖！** — and the same
-sentence stays at the foot of the About page, so it is still there after the
-notice has been dismissed. The About page itself points at nothing local: every
-row and button opens a GitHub address (project page, releases, issues, notices,
-licence text, core source), because a path on this disk is useless to anyone
-reading the page on another machine.
+No popup opens at launch: the licence sentence
+— **本软件开源免费，仅供学习交流使用，禁止售卖！** — sits at the foot of the
+About page instead, next to the disclaimer, so it is always there without
+standing between the user and the window. That page also points at nothing
+local: every row of its link card opens an **upstream open-source project** —
+the mihomo core, AmneziaWG, `lxn/walk`, `warpscout` and Psiphon — because a
+path on this disk is useless to anyone reading the page on another machine.
 
-Each install also carries a **control code** (`XXXX-XXXX-XXXX-XXXX`, shown and
-copyable on About), derived from the machine's Windows identity — so deleting
-`settings.json` does not mint a fresh one. The client reads
-[`control.json`](control.json) from the default branch at startup and every 15
-minutes:
-
-```json
-{
-  "stop_all": false,
-  "stopped_codes": ["ABCD-EFGH-JKMN-PQRS"],
-  "message": ""
-}
-```
-
-A listed code — or `stop_all` — stops that client: it refuses to connect, tears
-down a session that is already up, and says why on screen. `message` replaces
-the default sentence. The check is deliberately **fail-open**: an unreachable
-list keeps the previous verdict, so an offline laptop or a blocked GitHub never
-bricks a legitimate install, while the verdict is cached in `control-state.json`
-so a restart cannot quietly put a stopped client back into service.
-
-### Updating
-
-The About page checks `/releases/latest`; when a newer release exists its button
-becomes **Update to vX**. One click downloads the portable ZIP, checks that the
-program inside is a real PE image of plausible size, swaps it in place and
-restarts. The running image is renamed aside rather than overwritten — Windows
-forbids the latter — so a failed swap rolls back and leaves the current build
-working; the backup is cleared on the next start.
+The program has **no self-update channel and no remote kill switch**. There is
+nothing to configure and nothing to disable: updating means replacing
+`vegsh.exe` (and, if you like, `core\mihomo.exe`) from the package you
+downloaded, exactly like any other portable app.
 
 ### Tray
 
@@ -190,7 +165,7 @@ client, and the settings page's scrollbar can be dragged (it was wheel-only).
 ## Architecture
 
 ```
-xehn (package main)            the warpscout engine (verbatim) +
+vegsh (package main)            the warpscout engine (verbatim) +
                                      the client orchestration layer
 ├── cli.go / flags.go                command registry + flag wiring
 ├── main.go                          scan command (warpscout)
@@ -214,8 +189,6 @@ xehn (package main)            the warpscout engine (verbatim) +
 ├── gui_dialogs_windows.go ★         modal input/confirm, autostart, prefs plumbing
 ├── gui_native_stub.go ★             non-Windows no-op (native window = disabled)
 ├── settings.go        ★             settings.json model, load/save, normalisation
-├── control.go         ★             per-install control code + remote stop list
-├── control.json       ★             the published stop list the client reads
 │
 ├── internal/cache     ★             TTL cache store (account + scan results)
 └── internal/core      ★             mihomo sidecar manager + system proxy
@@ -247,13 +220,13 @@ Requires Go 1.26+ (module targets 1.26.3). On networks where
 `proxy.golang.org` is unreachable, point Go at a mirror:
 
 ```powershell
-$env:GOMODCACHE='E:\xiaohe\xhwarp\.gomod'
-$env:GOCACHE='E:\xiaohe\xhwarp\.gocache'
-$env:GOPATH='E:\xiaohe\xhwarp\.gopath'
+$env:GOMODCACHE='D:\go-cache\.gomod'
+$env:GOCACHE='D:\go-cache\.gocache'
+$env:GOPATH='D:\go-cache\.gopath'
 $env:GOPROXY='https://goproxy.cn,direct'
 
 # one program file: double-click opens the GUI, arguments run the CLI
-go build -trimpath -ldflags "-s -w -H windowsgui -X main.version=1.0 -X main.windowsGUIBuild=1" -o xehn.exe .
+go build -trimpath -ldflags "-s -w -H windowsgui -X main.version=1.0 -X main.windowsGUIBuild=1" -o vegsh.exe .
 
 # everything above + the portable ZIP in dist\ (the supported release path):
 powershell -ExecutionPolicy Bypass -File .\pack.ps1 [-MihomoPath <mihomo.exe>] [-PsiphonExePath <psiphon.exe>] [-PsiphonConfigPath <client.config>]
@@ -268,7 +241,7 @@ using `akavel/rsrc` (install once with `go install github.com/akavel/rsrc@latest
 flashes a terminal window. The same binary still serves the CLI: with a
 subcommand it attaches to the caller's console and reopens its standard
 streams. With no console attached the GUI redirects all output (its own and the
-mihomo core's) to `xehn.log` next to the exe. Because Windows does not
+mihomo core's) to `vegsh.log` next to the exe. Because Windows does not
 wait for a GUI-subsystem process, `cmd` returns to its prompt immediately while
 register/connect keep running in the background; their output stays attached to
 that terminal.
@@ -277,45 +250,45 @@ that terminal.
 
 ```powershell
 # 0. no arguments at all → the native GUI window (double-click equivalent)
-xehn.exe
-xehn.exe gui      # force the native window
+vegsh.exe
+vegsh.exe gui      # force the native window
 
 # 1. register a WARP account
-xehn register
+vegsh register
 
 # 2. connect — scans (cached 6h), picks best endpoint, starts core, sets proxy
-xehn connect -p awg
-xehn connect -p wg
-xehn connect -p masque
-xehn connect -p masque-h2
-xehn connect --tun            # TUN global mode (needs admin)
-xehn connect --scan-now       # force re-scan, ignore cache
-xehn connect -p awg --psiphon # base protocol + Psiphon exit (final IP = Psiphon)
+vegsh connect -p awg
+vegsh connect -p wg
+vegsh connect -p masque
+vegsh connect -p masque-h2
+vegsh connect --tun            # TUN global mode (needs admin)
+vegsh connect --scan-now       # force re-scan, ignore cache
+vegsh connect -p awg --psiphon # base protocol + Psiphon exit (final IP = Psiphon)
 
 # 3. show current exit IP / latency / country
-xehn status
+vegsh status
 
 # 4. list cached endpoints
-xehn list
-xehn list -p wg
+vegsh list
+vegsh list -p wg
 
 # 5. disconnect — stops core, restores prior system-proxy state
-xehn disconnect
+vegsh disconnect
 
 # raw engine commands (from warpscout) still work:
-xehn scan -best -p awg
-xehn scan -conf - -conf-type mihomo -p awg
+vegsh scan -best -p awg
+vegsh scan -conf - -conf-type mihomo -p awg
 ```
 
 ### Portable / custom home
 
 When `WARP_CLIENT_HOME` is unset, the client auto-anchors its home to the
 executable's folder (if writable — e.g. the extracted ZIP) and falls back to
-`%APPDATA%\xehn` otherwise. Set the variable explicitly to pin it:
+`%APPDATA%\vegsh` otherwise. Set the variable explicitly to pin it:
 
 ```powershell
 $env:WARP_CLIENT_HOME='D:\warp-portable'
-xehn connect
+vegsh connect
 ```
 
 ### Psiphon exit (V1)
@@ -341,8 +314,8 @@ The client config carries the `SponsorId` / `PropagationChannelId` /
 `server_list.dat` next to it is used as the initial server list.
 
 ```powershell
-xehn connect -p awg --psiphon
-xehn status            # session=AWG-Psiphon  endpoint=…  exit=<Psiphon exit IP>
+vegsh connect -p awg --psiphon
+vegsh status            # session=AWG-Psiphon  endpoint=…  exit=<Psiphon exit IP>
 ```
 
 `psiphon-tunnel-core` is **GPL-3.0**. It ships as a separate `psiphon.exe`

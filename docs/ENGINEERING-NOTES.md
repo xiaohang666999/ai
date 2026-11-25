@@ -120,7 +120,7 @@ func exitProbeClient(mixedPort int) *http.Client {
 Add-Type -Namespace Win32 -Name Gui4 -MemberDefinition '
 [DllImport("user32.dll")] public static extern uint GetGuiResources(IntPtr hProcess, uint uiFlags);'
 
-$p = Get-Process -Name xehn | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
+$p = Get-Process -Name vegsh | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
 $p.Refresh()
 [Win32.Gui4]::GetGuiResources($p.Handle, 0)   # GDI
 [Win32.Gui4]::GetGuiResources($p.Handle, 1)   # USER

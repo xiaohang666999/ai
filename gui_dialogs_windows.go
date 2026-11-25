@@ -352,37 +352,15 @@ func (u *natUI) infoDialog(title, headline string, lines []string) {
 	dlg.Run()
 }
 
-// showStartupNotice is the licence reminder every launch opens with: the
-// project is free and open source, and selling it is not allowed.
-func (u *natUI) showStartupNotice() {
-	u.infoDialog(tr("使用须知"), tr("本软件开源免费，仅供学习交流使用，禁止售卖！"), []string{
-		tr("本程序只在你自己的设备上配置一条加密隧道，"),
-		tr("不提供、不代理任何服务器资源，请遵守当地法律法规。"),
-		"",
-		tr("如果你是通过付费渠道拿到本软件的，说明你被骗了；"),
-		tr("请到项目主页免费下载：") + shortURL(repoURL),
-	})
-}
-
-// controlStoppedDialog explains a remote stop: what happened, which code this
-// install reports, and where to ask about it.
-func (u *natUI) controlStoppedDialog() {
-	msg := strings.TrimSpace(u.m.control.Message)
-	if msg == "" {
-		msg = defaultStopMessage
-	}
-	u.infoDialog(tr("客户端已停用"), msg, []string{
-		tr("控制码：") + u.m.set.ControlCode,
-		tr("如有疑问，请到项目主页反馈：") + shortURL(repoIssuesURL),
-	})
-}
-
 // ---------------------------------------------------------------------------
 // Shell helpers
 // ---------------------------------------------------------------------------
 
 // openURL hands a URL to the shell's default handler.
 func openURL(url string) {
+	if url == "" {
+		return
+	}
 	_ = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
 }
 

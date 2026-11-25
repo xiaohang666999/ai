@@ -1,16 +1,16 @@
 <!--
-  XEHN VPN Client · Blogger 正文（HTML 视图粘贴用）
+  VEGSH VPN Client · Blogger 正文（HTML 视图粘贴用）
   发布前只需替换两个占位符：
     {{DOWNLOAD_URL_1}}  → 下载地址一
     {{DOWNLOAD_URL_2}}  → 下载地址二
-  文中图片托管在 GitHub（jsDelivr CDN）。若图床打不开，把 img 的 src 换成
-  https://raw.githubusercontent.com/hezhanleiok/xehn/main/docs/blog/xxx.png 即可。
+  文中图片使用相对路径，与同目录下的 png 文件一一对应；贴到博客前请先
+  把图片上传到自己的图床，并把 img 的 src 换成对应地址。
   全文无 script / 无外链样式表，只用内联样式，兼容 Blogger 编辑器。
 -->
 
 <div style="max-width:820px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:16px;line-height:1.85;color:#232833;word-break:break-word;">
 
-  <p style="margin:0 0 18px;">XEHN VPN Client 是一个 Windows 上的 <strong>Cloudflare WARP 一键客户端</strong>：启动后点一下中间的圆钮，它会自动扫描最快的 WARP 端点、写好配置、拉起内核并接管系统代理，不用自己拼配置文件，也不用装任何运行库。</p>
+  <p style="margin:0 0 18px;">VEGSH VPN Client 是一个 Windows 上的 <strong>Cloudflare WARP 一键客户端</strong>：启动后点一下中间的圆钮，它会自动扫描最快的 WARP 端点、写好配置、拉起内核并接管系统代理，不用自己拼配置文件，也不用装任何运行库。</p>
 
   <div style="background:#f5f8ff;border:1px solid #e1ebfb;border-radius:14px;padding:18px 22px;margin:0 0 26px;">
     <p style="margin:0 0 10px;font-weight:600;color:#1b2233;">它做了什么</p>
@@ -26,9 +26,9 @@
   <p style="margin:0 0 8px;color:#5b6478;font-size:14px;">系统要求：Windows 10 / 11（64 位）。便携版免安装，解压即用，配置文件就放在程序旁边。</p>
 
   <h2 style="font-size:22px;line-height:1.5;margin:34px 0 14px;padding-left:12px;border-left:4px solid #2f6fed;color:#161b26;">一、下载与解压</h2>
-  <p style="margin:0 0 14px;">在文末下载压缩包，解压到任意<strong>可写</strong>目录（例如 <code style="background:#f1f4f9;padding:2px 6px;border-radius:5px;font-size:14px;">D:\XEHN</code>，不要放在 <code style="background:#f1f4f9;padding:2px 6px;border-radius:5px;font-size:14px;">C:\Program Files</code> 这类需要管理员权限的目录）。</p>
+  <p style="margin:0 0 14px;">在文末下载压缩包，解压到任意<strong>可写</strong>目录（例如 <code style="background:#f1f4f9;padding:2px 6px;border-radius:5px;font-size:14px;">D:\VEGSH</code>，不要放在 <code style="background:#f1f4f9;padding:2px 6px;border-radius:5px;font-size:14px;">C:\Program Files</code> 这类需要管理员权限的目录）。</p>
   <p style="margin:0 0 14px;">解压后只有一个程序文件：</p>
-  <pre style="background:#1f2430;color:#e6ecf7;border-radius:12px;padding:16px 18px;font-size:13.5px;line-height:1.7;overflow-x:auto;margin:0 0 14px;font-family:Consolas,Monaco,monospace;">XEHN\
+  <pre style="background:#1f2430;color:#e6ecf7;border-radius:12px;padding:16px 18px;font-size:13.5px;line-height:1.7;overflow-x:auto;margin:0 0 14px;font-family:Consolas,Monaco,monospace;">VEGSH\
 ├── warp-client.exe        ← 双击它
 ├── core\
 │   ├── mihomo.exe         ← 内核，可单独替换升级
@@ -48,7 +48,7 @@
   <h2 style="font-size:22px;line-height:1.5;margin:34px 0 14px;padding-left:12px;border-left:4px solid #2f6fed;color:#161b26;">三、点一下就连上</h2>
   <p style="margin:0 0 6px;">主界面长这样：左边是导航，中间是连接按钮，右边是当前的出口信息。</p>
 
-  <img src="https://cdn.jsdelivr.net/gh/hezhanleiok/xehn@811a5eddeac550944636111e6f118763414eba34/docs/blog/01-home.png" alt="XEHN VPN Client 首页" width="100%" style="width:100%;height:auto;display:block;border:1px solid #e6ecf5;border-radius:12px;margin:18px 0 8px;">
+  <img src="01-home.png" alt="VEGSH VPN Client 首页" width="100%" style="width:100%;height:auto;display:block;border:1px solid #e6ecf5;border-radius:12px;margin:18px 0 8px;">
   <p style="text-align:center;color:#8b93a5;font-size:13px;margin:0 0 22px;">图 1 · 首页：中间的圆钮就是连接开关</p>
 
   <p style="margin:0 0 12px;">操作顺序：</p>
@@ -64,7 +64,7 @@
   <h2 style="font-size:22px;line-height:1.5;margin:34px 0 14px;padding-left:12px;border-left:4px solid #2f6fed;color:#161b26;">四、按需调整设置（可选）</h2>
   <p style="margin:0 0 6px;">默认配置已经能直接用，多数人不需要动。想改的话点左侧「设置」，一页往下滚就是全部选项：</p>
 
-  <img src="https://cdn.jsdelivr.net/gh/hezhanleiok/xehn@811a5eddeac550944636111e6f118763414eba34/docs/blog/02-settings.png" alt="XEHN VPN Client 设置：连接与接管、分流规则" width="100%" style="width:100%;height:auto;display:block;border:1px solid #e6ecf5;border-radius:12px;margin:18px 0 8px;">
+  <img src="02-settings.png" alt="VEGSH VPN Client 设置：连接与接管、分流规则" width="100%" style="width:100%;height:auto;display:block;border:1px solid #e6ecf5;border-radius:12px;margin:18px 0 8px;">
   <p style="text-align:center;color:#8b93a5;font-size:13px;margin:0 0 22px;">图 2 · 设置上半部分：接管方式与分流规则</p>
 
   <div style="border:1px solid #e6ecf5;border-radius:12px;padding:4px 20px 14px;margin:0 0 22px;">
@@ -76,7 +76,7 @@
     <p style="margin:0;color:#414a5e;">预设里可选「自定义 / 绕过大陆 / 黑名单 / 全局 / 直连」。自定义模式下，<strong>直连域名</strong>走本地网络、<strong>代理域名</strong>走隧道，其余按预设处理。</p>
   </div>
 
-  <img src="https://cdn.jsdelivr.net/gh/hezhanleiok/xehn@811a5eddeac550944636111e6f118763414eba34/docs/blog/03-settings-dns.png" alt="XEHN VPN Client 设置：启动与行为、DNS 与出口" width="100%" style="width:100%;height:auto;display:block;border:1px solid #e6ecf5;border-radius:12px;margin:18px 0 8px;">
+  <img src="03-settings-dns.png" alt="VEGSH VPN Client 设置：启动与行为、DNS 与出口" width="100%" style="width:100%;height:auto;display:block;border:1px solid #e6ecf5;border-radius:12px;margin:18px 0 8px;">
   <p style="text-align:center;color:#8b93a5;font-size:13px;margin:0 0 22px;">图 3 · 设置下半部分：启动与行为、DNS 与出口</p>
 
   <div style="border:1px solid #e6ecf5;border-radius:12px;padding:4px 20px 14px;margin:0 0 22px;">
@@ -89,7 +89,7 @@
   <h2 style="font-size:22px;line-height:1.5;margin:34px 0 14px;padding-left:12px;border-left:4px solid #2f6fed;color:#161b26;">五、出问题看日志</h2>
   <p style="margin:0 0 6px;">左侧「日志」页有三个标签：<strong>运行日志</strong>（客户端和内核的实时输出）、<strong>连接记录</strong>（每次连接经过的步骤）、<strong>调试信息</strong>。连不上时，先看这里有没有红色/黄色提示。</p>
 
-  <img src="https://cdn.jsdelivr.net/gh/hezhanleiok/xehn@811a5eddeac550944636111e6f118763414eba34/docs/blog/04-logs.png" alt="XEHN VPN Client 日志页" width="100%" style="width:100%;height:auto;display:block;border:1px solid #e6ecf5;border-radius:12px;margin:18px 0 8px;">
+  <img src="04-logs.png" alt="VEGSH VPN Client 日志页" width="100%" style="width:100%;height:auto;display:block;border:1px solid #e6ecf5;border-radius:12px;margin:18px 0 8px;">
   <p style="text-align:center;color:#8b93a5;font-size:13px;margin:0 0 22px;">图 4 · 日志页：右上角可一键清空或复制全文</p>
 
   <p style="margin:0 0 14px;">遇到问题需要求助时，点「复制」把日志全文复制出来，比截图好排查。</p>
@@ -128,13 +128,12 @@
   <h2 style="font-size:22px;line-height:1.5;margin:34px 0 14px;padding-left:12px;border-left:4px solid #2f6fed;color:#161b26;">七、下载</h2>
 
   <div style="background:#eef4ff;border:1px solid #cfe0ff;border-radius:16px;padding:26px 22px;text-align:center;margin:0 0 20px;">
-    <p style="margin:0 0 6px;font-size:18px;font-weight:600;color:#161b26;">XEHN VPN Client · 便携版</p>
+    <p style="margin:0 0 6px;font-size:18px;font-weight:600;color:#161b26;">VEGSH VPN Client · 便携版</p>
     <p style="margin:0 0 20px;color:#5b6478;font-size:14px;">Windows 10 / 11 64 位 · 解压即用 · 不含任何账号数据</p>
     <p style="margin:0 0 6px;">
       <a href="{{DOWNLOAD_URL_1}}" target="_blank" rel="noopener" style="display:inline-block;padding:13px 30px;margin:6px;background:#2f6fed;color:#ffffff;border-radius:10px;text-decoration:none;font-weight:600;font-size:16px;">下载地址一</a>
       <a href="{{DOWNLOAD_URL_2}}" target="_blank" rel="noopener" style="display:inline-block;padding:13px 30px;margin:6px;background:#ffffff;color:#2f6fed;border:1px solid #b9d2ff;border-radius:10px;text-decoration:none;font-weight:600;font-size:16px;">下载地址二</a>
     </p>
-    <p style="margin:16px 0 0;font-size:14px;color:#5b6478;">GitHub 项目地址：<a href="https://github.com/hezhanleiok/xehn" target="_blank" rel="noopener" style="color:#2f6fed;text-decoration:none;font-weight:600;">github.com/hezhanleiok/xehn</a></p>
   </div>
 
   <div style="background:#fff8e8;border:1px solid #f6e2b8;border-radius:14px;padding:18px 22px;margin:0 0 10px;">
