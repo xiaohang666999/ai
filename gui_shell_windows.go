@@ -215,7 +215,7 @@ func (u *natUI) paintSidebar(c *walk.Canvas) {
 	// own line, then the connection state. The logo keeps its own aspect.
 	const logoW = 64.0
 	u.drawLogo(c, (sw-logoW)/2, 20, logoW)
-	logoH := logoW * 321.0 / 512.0
+	logoH := logoW * logoAspect
 	nameY := 20 + logoH + 12
 
 	ver := shortVersion()

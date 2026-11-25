@@ -431,7 +431,7 @@ func banner(st conStyles) string {
 		// misaligns - a U+1F49x heart is measured and rendered the same width.
 		heart = "💕"
 	}
-	credit := st.dim.Render("Made with ") + st.fail.Render(heart) + st.dim.Render(" by vernette")
+	credit := st.dim.Render("Made with ") + st.fail.Render(heart) + st.dim.Render(" by xiaohang")
 	return st.box.Render(lipgloss.JoinVertical(lipgloss.Center,
 		st.title.Render("WARPSCOUT"),
 		credit,
