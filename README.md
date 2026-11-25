@@ -1,357 +1,210 @@
 # VEGSH
 
-A Windows client for Cloudflare WARP that scans for the best endpoint and
-connects through it in one click — built on top of
-[`vernette/warpscout`](https://github.com/vernette/warpscout)'s scanning engine
-with an embedded Clash (mihomo) core for actual traffic routing.
+English | [中文](README.zh-CN.md)
 
-**Download:** build it yourself (see [Build](#build)) or unzip a portable
-package from your distribution channel anywhere writable and double-click
-`vegsh.exe`. The package carries no account: the first connect registers
-a fresh WARP device for that machine.
+A Windows-first Cloudflare WARP client that scans for working endpoints and connects through them with one click. It combines the scanning engine from [vernette/warpscout](https://github.com/vernette/warpscout) with an embedded [mihomo](https://github.com/MetaCubeX/mihomo) core for actual traffic routing.
 
-## What it does
+> **Notice**: This software is open source and free for learning and communication purposes only. Commercial sale is prohibited. The program only configures an encrypted tunnel on the local machine; it does not provide or proxy any server resources.
 
-| capability                          | status |
-|-------------------------------------|--------|
-| WARP endpoint scan (2-phase probe + tunnel verify) | ✅ reused from warpscout |
-| Account register / rotate           | ✅ reused from warpscout |
-| AmneziaWG (AWG) core                 | ✅ `amneziawg-go` userspace (scan) + mihomo `amnezia-wg-option` (routing) |
-| WireGuard                           | ✅ mihomo `type: wireguard` |
-| MASQUE / MASQUE-H2                  | ✅ mihomo `type: masque` + `network: h2` |
-| WARP-in-WARP (nested)               | ✅ mihomo `dialer-proxy` chains |
-| Psiphon exit (V1, base + Psiphon)   | ✅ `psiphon.exe` sidecar over a localhost SOCKS; `connect --psiphon` |
-| Exit IP / latency / country display | ✅ live probe via mixed-port + cached scan meta |
-| Scan-result + account cache (TTL)   | ✅ `internal/cache` (6h TTL, JSON, survives reload) |
-| System-proxy mode (default)         | ✅ WinINET registry + `InternetSetOption` notify |
-| TUN global mode (optional)          | ✅ mihomo `tun:` block (needs admin; wintun is embedded) |
-| Native GUI (double-click portable)    | ✅ sidebar shell — Home/Settings/About/Logs, light+dark theme, 中文/English |
-| Licence notice                        | ✅ About-page footer (no startup popup) |
-| Portable ZIP, core separated        | ✅ `pack.ps1` → v2rayN-style layout |
-| Core one-click download/update      | ✅ GitHub releases auto-provision |
+## Features
 
-## Quick start (portable, v2rayN style)
+| Capability | Status |
+|---|---|
+| WARP endpoint scan (2-phase probe + tunnel verification) | Supported (warpscout engine) |
+| Account register / rotate | Supported |
+| AmneziaWG (AWG) | Supported — `amneziawg-go` userspace scan + mihomo `amnezia-wg-option` routing |
+| WireGuard | Supported — mihomo `type: wireguard` |
+| MASQUE / MASQUE-H2 | Supported — mihomo `type: masque` / `network: h2` |
+| WARP-in-WARP (nested) | Supported — mihomo `dialer-proxy` chains |
+| Psiphon exit (base protocol + Psiphon) | Supported — `psiphon.exe` sidecar over localhost SOCKS |
+| OpenVPN exit (VPN Gate relay) | Supported — `--openvpn` via mihomo |
+| Exit IP / latency / country display | Supported |
+| Scan result + account cache (TTL) | Supported — `internal/cache` |
+| System proxy mode (default) | Supported — WinINET registry + `InternetSetOption` notify |
+| TUN global mode (optional) | Supported — mihomo `tun:` (requires Administrator; wintun embedded) |
+| Native GUI (double-click portable) | Supported — Windows native window (lxn/walk), light/dark theme, 中文/English |
+| Core separation / update | Supported — `core/mihomo.exe` managed as a plain file |
+| Portable ZIP layout | Supported — `pack.ps1` assembles a v2rayN-style package |
 
-```powershell
-# 1. unzip anywhere writable
-# 2. double-click vegsh.exe  →  native window opens (Proton style)
-# 3. click 连接 — first run auto-registers a WARP account + scans
-```
+## Quick Start (Portable)
 
-ZIP layout (`pack.ps1` assembles it):
+1. Unzip the package into any writable directory.
+2. Double-click `vegsh.exe` — the native GUI window opens.
+3. Click **Connect**. On first run, VEGSH automatically registers a WARP account and scans for the best endpoint.
+
+The ZIP is assembled from a clean staging tree and does **not** include `warpscout-account.json`, state, settings, caches, or logs. A fresh device registers its own WARP account on first connect/scan. Do not copy an old `warpscout-account.json` to another machine unless you intentionally want to reuse that device identity.
+
+### Portable Layout
 
 ```
 VEGSH\
-├── vegsh.exe             ← the only program file: double-click opens the GUI;
-│                           arguments run the CLI in the calling terminal
+├── vegsh.exe             # Single program file: double-click opens GUI; CLI with args
 ├── core\
-│   ├── mihomo.exe        ← the Clash core — replace this file to update it
-│   ├── psiphon.exe       ← optional: Psiphon exit sidecar (GPL-3.0)
-│   ├── client.config     ← optional: official Psiphon credentials (needed with psiphon.exe)
-│   ├── server_list.dat   ← optional: initial Psiphon server list
-│   ├── geosite.dat       ← geo data: needed by the "bypass mainland" preset
-│   └── geoip.metadb      ← geo data: same; missing files are downloaded on first use
+│   ├── mihomo.exe        # Clash core (replaceable independently)
+│   ├── psiphon.exe       # Optional: Psiphon exit sidecar (GPL-3.0)
+│   ├── client.config     # Optional: official Psiphon credentials (required with psiphon.exe)
+│   ├── server_list.dat   # Optional: initial Psiphon server list
+│   ├── geosite.dat       # Geo data for "bypass mainland" routing preset
+│   └── geoip.metadb      # Geo data; missing files can be downloaded on first use
 └── README.txt
 ```
 
-The ZIP is assembled from a fresh staging tree and never contains
-`warpscout-account.json`, state, settings, caches or logs: a new device has no
-credentials, so its first connect/scan registers a new WARP account there. Do
-not copy an old `warpscout-account.json` along with the program unless you
-intend to reuse that device identity.
+When `WARP_CLIENT_HOME` is not set, VEGSH anchors its home to the executable directory (if writable), otherwise falls back to `%APPDATA%\vegsh`. Account, cache, state, config, and logs stay next to the executable in portable mode.
 
-The executable auto-anchors `WARP_CLIENT_HOME` to its own folder (portable
-mode), so account, cache, state, config and logs all stay next to the exe —
-delete the folder and everything is gone.
+## GUI
 
-### Updating the core later (核心分离)
+`vegsh.exe gui` (or a bare double-click) opens a native Windows window built on [lxn/walk](https://github.com/lxn/walk). It is self-drawn on a `CustomWidgetPixels` canvas — no browser, no webview, no runtime UI dependency. The layout is DPI-scaled.
 
-The GUI never embeds mihomo; it manages `core\mihomo.exe` as a plain file:
-
-- **One click**: About page → 「检查/下载内核」 downloads the latest
-  `mihomo-windows-amd64` release.
-- **Manual**: drop any mihomo build into `core\mihomo.exe` — no rebuild, no
-  version lock. `vegsh.exe` also accepts `-core PATH` to point elsewhere.
-
-### The GUI
-
-`vegsh.exe gui` (or a bare double-click) opens a
-**native Windows window** — self-drawn on [`lxn/walk`](https://github.com/lxn/walk)
-(a single `CustomWidgetPixels` canvas; no browser, no webview, no runtime UI
-dependency). The layout is a 1080x700 grid scaled by the display DPI, so it
-stays sharp from 100% to 250% Windows scaling.
-
-A left rail switches between four pages, and the header carries the two
-appearance switches (theme, language) so neither needs a trip to settings:
-
-| page | contents |
+| Page | Contents |
 |---|---|
-| **Home** | connect/disconnect circle with the session clock, current exit (flag, colo, latency, up/down), protocol selector with live core-capability state, selected node detail + live throughput chart |
-| **Settings** | one page, four cards: capture (system proxy or VPN/TUN, local proxy port, LAN access, API port, address family with protocol gating, MTU), routing (proxy mode, default node, split tunnelling, domain lists, geo split), startup/behaviour (autostart, auto-connect, rescan, auto-repair, remember page, timeout), DNS & exit (presets, no-DNS, Psiphon + region) |
-| **About** | versions, data/core paths, licences, upstream project links |
-| **Logs** | run log (level-tagged console), connection history (the connect pipeline's own steps), diagnostics (copyable) |
+| **Home** | Connect/disconnect, session clock, current exit (flag, colo, latency, up/down), protocol selector, selected node detail, live throughput chart |
+| **Settings** | Capture (system proxy / VPN-TUN, local port, LAN access, API port, address family, MTU), routing (proxy mode, default node, split tunneling, domain lists, geo split), startup/behavior, DNS & exit (Psiphon / OpenVPN region) |
+| **About** | Versions, data/core paths, licenses, upstream project links |
+| **Logs** | Runtime log, connection history, diagnostics |
 
-Theme: **light (default)**, dark, or follow the system — switched live, title
-bar included. Language: **中文 (default)** or English; every string goes through
-one table, so a missing translation falls back to Chinese instead of showing a
-key.
+Appearance: light (default), dark, or follow system. Language: **中文 (default)** or English. Preferences are stored in `settings.json` next to the executable.
 
-#### Screenshots
+### Screenshots
 
-**Home** — the connect circle with the session clock, the live exit (flag,
-colo, latency, throughput) and the protocol picker:
+| Home | Settings |
+|---|---|
+| ![Home](docs/screenshots/01-home.png) | ![Settings — capture and routing](docs/screenshots/02-settings-capture.png) |
 
-![Home](docs/screenshots/01-home.png)
+| Settings (continued) | Logs |
+|---|---|
+| ![Settings — behavior and DNS](docs/screenshots/03-settings-behaviour.png) | ![Logs](docs/screenshots/04-logs.png) |
 
-**Settings** — one scrollable page: capture (system proxy or VPN/TUN, local
-port, LAN access, API port, address family, MTU) and routing (preset, default
-node, direct/proxy domain lists):
-
-![Settings — capture and routing](docs/screenshots/02-settings-capture.png)
-
-…then startup/behaviour (autostart, auto-connect, rescan, auto-repair,
-timeout) and DNS & exit:
-
-![Settings — behaviour and DNS](docs/screenshots/03-settings-behaviour.png)
-
-**Logs** — runtime log, connection history and copyable diagnostics:
-
-![Logs](docs/screenshots/04-logs.png)
-
-The About page follows the same grid — this build, its licences, the core, and
-one card of upstream GitHub links — and is described in
-[Licence notice](#licence-notice) below.
-
-The same window in English (the language pill lives in the Home header, so it
-never needs a trip to settings):
+English UI:
 
 ![English UI](docs/screenshots/05-logs-en.png)
 
-Preferences live in `settings.json` next to the exe (portable layout) and are
-applied to the engine on connect: proxy mode and the domain lists become mihomo
-rules, per-app split becomes `PROCESS-NAME` rules, and DNS / MTU / address
-family go into the rendered config. The region split is offered only when the
-core's `geosite.dat` / `geoip.metadb` are already present — mihomo tries to
-download them as soon as a `GEOSITE` rule appears and refuses the whole config
-when it cannot, so the switch stays off rather than producing a config that
-cannot start.
+## CLI Usage
 
-The GUI runs the exact same code path as the CLI
-(`defaultConnectOptions` → `runConnectCmd`), so behaviour cannot drift.
+The same `vegsh.exe` serves both GUI and CLI. Running with a subcommand executes the CLI; double-clicking with no arguments opens the GUI.
 
-### Licence notice
+```powershell
+# GUI
+vegsh.exe
+vegsh.exe gui
 
-No popup opens at launch: the licence sentence
-— **本软件开源免费，仅供学习交流使用，禁止售卖！** — sits at the foot of the
-About page instead, next to the disclaimer, so it is always there without
-standing between the user and the window. That page also points at nothing
-local: every row of its link card opens an **upstream open-source project** —
-the mihomo core, AmneziaWG, `lxn/walk`, `warpscout` and Psiphon — because a
-path on this disk is useless to anyone reading the page on another machine.
+# Register a WARP account
+vegsh.exe register
 
-The program has **no self-update channel and no remote kill switch**. There is
-nothing to configure and nothing to disable: updating means replacing
-`vegsh.exe` (and, if you like, `core\mihomo.exe`) from the package you
-downloaded, exactly like any other portable app.
+# Connect (scans or reuses cached scan, picks best endpoint, starts core, sets system proxy)
+vegsh.exe connect -p awg
+vegsh.exe connect -p wg
+vegsh.exe connect -p masque
+vegsh.exe connect -p masque-h2
+vegsh.exe connect --tun            # TUN global mode (requires Administrator)
+vegsh.exe connect --scan-now       # Force re-scan, ignore cache
 
-### Tray
+# Psiphon exit (final exit IP becomes Psiphon's)
+vegsh.exe connect -p awg --psiphon
 
-Closing the window parks the client in the system tray instead of quitting — the
-tunnel and the system proxy stay up, which is the point of a VPN client.
-Left-click the tray icon to bring the window back, right-click for **Exit**.
-Launching the exe again raises the existing window rather than starting a second
-client, and the settings page's scrollbar can be dragged (it was wheel-only).
+# OpenVPN exit via VPN Gate relay (IPv4 only; takes precedence over --psiphon)
+vegsh.exe connect -p awg --openvpn
+vegsh.exe connect -p awg --openvpn --openvpn-region JP
 
-## Architecture
+# Status / list / disconnect
+vegsh.exe status
+vegsh.exe list
+vegsh.exe list -p wg
+vegsh.exe disconnect
 
-```
-vegsh (package main)            the warpscout engine (verbatim) +
-                                     the client orchestration layer
-├── cli.go / flags.go                command registry + flag wiring
-├── main.go                          scan command (warpscout)
-├── register.go                      account registration (warpscout)
-├── tunnel.go / masque.go / nest.go  userspace tunnels: AWG/MASQUE/WARP-in-WARP
-├── wgconf.go                        native .conf + mihomo proxy rendering
-├── client.go          ★             full mihomo config renderer + cache glue
-├── connect.go         ★             connect/disconnect/status/list commands
-├── gui.go             ★             GUI/CLI shared entry (defaultConnectOptions)
-├── gui_dispatch.go    ★             `gui` command + double-click entry
-├── gui_native_windows.go ★          window, model, paint dispatch, background loops
-├── gui_theme_windows.go ★           light/dark palettes, theme resolve, dark title bar
-├── gui_i18n_windows.go ★            中文/English string table (tr/trf)
-├── gui_draw_windows.go ★            canvas primitives + widgets (cards, chips, switches)
-├── gui_shell_windows.go ★           sidebar + page header + page routing
-├── gui_page_home_windows.go ★       Home page
-├── gui_page_nodes_windows.go ★      Nodes page (not in the sidebar; node choice is the Settings pin)
-├── gui_page_settings_windows.go ★   Settings page (capture / routing / startup / DNS & exit)
-├── gui_page_logs_windows.go ★       Logs page (run / history / diagnostics)
-├── gui_actions_windows.go ★         id → action routing, settings actions
-├── gui_dialogs_windows.go ★         modal input/confirm, autostart, prefs plumbing
-├── gui_native_stub.go ★             non-Windows no-op (native window = disabled)
-├── settings.go        ★             settings.json model, load/save, normalisation
-│
-├── internal/cache     ★             TTL cache store (account + scan results)
-└── internal/core      ★             mihomo sidecar manager + system proxy
-    ├── core.go                      process lifecycle, config write, readiness
-    ├── download.go                  locate/download mihomo core binary
-    ├── proxy_windows.go             WinINET system proxy set/unset
-    └── proxy_other.go               non-Windows no-op stub
+# Raw warpscout engine commands still work
+vegsh.exe scan -best -p awg
+vegsh.exe scan -conf - -conf-type mihomo -p awg
 ```
 
-`★` = new code added on top of the warpscout engine.
+> On Windows, because the GUI build uses the `windowsgui` subsystem, `cmd` may return to the prompt immediately while background CLI work continues; output remains attached to the calling terminal.
 
-## The two "cores" the client introduces
+## Core Management
 
-1. **AWG core** — `amneziawg-go` (already a warpscout dependency). It is the
-   userspace AmneziaWG implementation used both for *scanning* (the tunnel that
-   verifies an endpoint really exits where it claims) and as the basis the
-   mihomo proxy renders into.
-2. **Clash core** — mihomo (MetaCubeX/mihomo), run as a **sidecar binary**. This
-   is the same pattern every mature Clash GUI (Clash Verge, FlClash, …) uses:
-   the client writes a full `config.yaml`, spawns the core, controls it over
-   the `external-controller` REST API, and points the OS at its mixed port.
-   mihomo natively speaks `wireguard` (+ `amnezia-wg-option`), `masque`
-   (+ `network: h2`) and `dialer-proxy` chains, so a single embedded core
-   covers all four protocols + WARP-in-WARP for routing.
+The GUI does not embed mihomo. It manages `core\mihomo.exe` as a plain file:
+
+- **GUI**: About page → “Check/Download core” fetches the latest `mihomo-windows-amd64` release.
+- **Manual**: Replace `core\mihomo.exe` with any compatible mihomo build. No rebuild required.
+- **CLI flag**: `-core PATH` points to a specific core binary.
+
+## Psiphon Exit
+
+Psiphon is an **exit**, not a base protocol. `connect --psiphon` brings the base protocol up first, points Psiphon’s upstream at that localhost SOCKS, and makes Psiphon the final egress — the public exit IP becomes Psiphon’s.
+
+Required assets:
+
+| Asset | Default location | Override |
+|---|---|---|
+| Psiphon executable | `core\psiphon.exe` | `--psiphon-exe` or `PSIPHON_EXE` |
+| Official client config | `core\client.config` or `core\psiphon.config` | `PSIPHON_CONFIG` |
+
+`psiphon-tunnel-core` is GPL-3.0. It runs as a separate process and is not linked into this binary. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## TUN Mode
+
+`--tun` adds a `tun:` block to the mihomo config and routes traffic through a virtual interface instead of system proxy.
+
+- Run as **Administrator**.
+- The shipped mihomo build embeds wintun; no extra `wintun.dll` is required.
 
 ## Build
 
-Requires Go 1.26+ (module targets 1.26.3). On networks where
-`proxy.golang.org` is unreachable, point Go at a mirror:
+Requires Go 1.26+ (module targets `go 1.26.3`).
 
 ```powershell
-$env:GOMODCACHE='D:\go-cache\.gomod'
-$env:GOCACHE='D:\go-cache\.gocache'
-$env:GOPATH='D:\go-cache\.gopath'
+# Optional: use a Go module proxy mirror if needed
 $env:GOPROXY='https://goproxy.cn,direct'
 
-# one program file: double-click opens the GUI, arguments run the CLI
+# Build the Windows GUI/CLI binary
 go build -trimpath -ldflags "-s -w -H windowsgui -X main.version=1.0 -X main.windowsGUIBuild=1" -o vegsh.exe .
 
-# everything above + the portable ZIP in dist\ (the supported release path):
+# Assemble the portable ZIP (recommended release path)
 powershell -ExecutionPolicy Bypass -File .\pack.ps1 [-MihomoPath <mihomo.exe>] [-PsiphonExePath <psiphon.exe>] [-PsiphonConfigPath <client.config>]
 ```
 
-The native window links a Win32 manifest (comctl32 v6) embedded into
-`rsrc_windows_amd64.syso` — without it `lxn/walk` fails at startup with
-`TTM_ADDTOOL failed`. `pack.ps1` regenerates the `.syso` from `app.manifest`
-using `akavel/rsrc` (install once with `go install github.com/akavel/rsrc@latest`).
+Notes:
 
-`-H windowsgui` strips the console subsystem flag, so a double-click never
-flashes a terminal window. The same binary still serves the CLI: with a
-subcommand it attaches to the caller's console and reopens its standard
-streams. With no console attached the GUI redirects all output (its own and the
-mihomo core's) to `vegsh.log` next to the exe. Because Windows does not
-wait for a GUI-subsystem process, `cmd` returns to its prompt immediately while
-register/connect keep running in the background; their output stays attached to
-that terminal.
+- The native Windows window requires the Win32 manifest embedded in `rsrc_windows_amd64.syso`. `pack.ps1` regenerates it from `app.manifest` using `akavel/rsrc`.
+- `-H windowsgui` removes the console flash on double-click; the same binary still attaches to the calling console when run with CLI arguments.
 
-## Usage
+## Testing
 
 ```powershell
-# 0. no arguments at all → the native GUI window (double-click equivalent)
-vegsh.exe
-vegsh.exe gui      # force the native window
-
-# 1. register a WARP account
-vegsh register
-
-# 2. connect — scans (cached 6h), picks best endpoint, starts core, sets proxy
-vegsh connect -p awg
-vegsh connect -p wg
-vegsh connect -p masque
-vegsh connect -p masque-h2
-vegsh connect --tun            # TUN global mode (needs admin)
-vegsh connect --scan-now       # force re-scan, ignore cache
-vegsh connect -p awg --psiphon # base protocol + Psiphon exit (final IP = Psiphon)
-
-# 3. show current exit IP / latency / country
-vegsh status
-
-# 4. list cached endpoints
-vegsh list
-vegsh list -p wg
-
-# 5. disconnect — stops core, restores prior system-proxy state
-vegsh disconnect
-
-# raw engine commands (from warpscout) still work:
-vegsh scan -best -p awg
-vegsh scan -conf - -conf-type mihomo -p awg
+go test ./...
 ```
 
-### Portable / custom home
-
-When `WARP_CLIENT_HOME` is unset, the client auto-anchors its home to the
-executable's folder (if writable — e.g. the extracted ZIP) and falls back to
-`%APPDATA%\vegsh` otherwise. Set the variable explicitly to pin it:
+Optional real-core integration test:
 
 ```powershell
-$env:WARP_CLIENT_HOME='D:\warp-portable'
-vegsh connect
-```
-
-### Psiphon exit (V1)
-
-Psiphon is an **exit**, not a fifth protocol. `connect --psiphon` brings the base
-protocol (WG / AWG / MASQUE) up first, points Psiphon's upstream at that localhost
-SOCKS, and makes Psiphon the final egress — so the public exit IP becomes
-Psiphon's. The session is a composition: `status` shows e.g. `session=AWG-Psiphon`,
-while `state.Proto` stays the base protocol (`awg`) and the switch lives in
-`psiphon_mode`.
-
-Assets — both required; `connect --psiphon` fails fast with a clear message if
-either is missing:
-
-| asset | default location | override |
-|---|---|---|
-| Psiphon executable | `core\psiphon.exe` | `--psiphon-exe` flag, else `PSIPHON_EXE` env |
-| official client config | `core\client.config`, then `core\psiphon.config` | `PSIPHON_CONFIG` env |
-
-The client config carries the `SponsorId` / `PropagationChannelId` /
-`RemoteServerListURLs` / `ObfuscatedServerListRootURLs` and their signature keys
-— without it Psiphon discovers zero servers and never builds a tunnel. A
-`server_list.dat` next to it is used as the initial server list.
-
-```powershell
-vegsh connect -p awg --psiphon
-vegsh status            # session=AWG-Psiphon  endpoint=…  exit=<Psiphon exit IP>
-```
-
-`psiphon-tunnel-core` is **GPL-3.0**. It ships as a separate `psiphon.exe`
-process driven over a localhost SOCKS and is never linked into this binary.
-`pack.ps1` bundles `psiphon.exe` / `client.config` / `server_list.dat` into
-`core\` when present (or when passed via `-PsiphonExePath` /
-`-PsiphonConfigPath`).
-
-Because the ZIP ships GPL-3.0 binaries (mihomo too), the pack also carries the
-license text and the obligations inventory: see
-[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) and
-`licenses/GPL-3.0.txt` in the ZIP. **Legal review is required before public
-distribution** — that file is an engineering inventory, not a legal conclusion.
-
-### TUN mode
-
-`--tun` adds a `tun:` block to the mihomo config and routes all traffic through
-a virtual interface instead of the system proxy. Requirements:
-
-- Run the client as **administrator** (elevated). The mihomo build this client
-  ships embeds wintun, so no extra `wintun.dll` is required.
-
-## Tests
-
-```powershell
-go test ./...          # hermetic suite
-
-# + real-core integration test (renders configs for all 4 protocols, boots a
-#   real mihomo, asserts controller + proxy registration + mixed-port):
 $env:WARP_TEST_MIHOMO='path\to\mihomo.exe'
 go test -v -run TestMihomoAcceptsRenderedConfig .
 ```
 
-`internal/cache` — put/get round-trip, TTL expiry, reload survival, corrupt-file
-recovery. `internal/core` — config validation, atomic write, readiness timeout.
-`package main` — cached-scan round-trip, state persistence, `list`/`status`
-clean degradation, endpoint ranking tie-breaks, portable-home override, and
-(with `WARP_TEST_MIHOMO`) the live core integration across `awg` / `wg` /
-`masque` / `masque-h2`.
+## Architecture
+
+```
+vegsh (package main)            warpscout engine (verbatim) + client orchestration
+├── cli.go / flags.go           command registry + flag wiring
+├── connect.go                  connect/disconnect/status/list pipeline
+├── client.go                   mihomo config renderer + cache glue
+├── gui*.go                     native Windows GUI (walk/canvas)
+├── settings.go                 settings model/load/save
+├── internal/cache              TTL cache store (account + scan results)
+└── internal/core               mihomo sidecar manager + system proxy
+```
+
+The client has two core concepts:
+
+1. **AWG/WARP engine** — `amneziawg-go` userspace implementation used by the warpscout scanning/tunnel path.
+2. **Clash core** — mihomo sidecar binary. VEGSH writes a full `config.yaml`, spawns the core, controls it via its external controller REST API, and points the OS at its mixed port.
+
+## License & Third-Party Notices
+
+This repository includes and/or interoperates with third-party components under their own licenses. In particular, mihomo and Psiphon components are GPL-3.0. Review [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and `third_party/` before redistribution. This README is an engineering summary, not legal advice.
+
+## Credits
+
+- Scanning engine: [vernette/warpscout](https://github.com/vernette/warpscout)
+- Clash core: [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo)
+- AmneziaWG: [amnezia-vpn/amneziawg-go](https://github.com/amnezia-vpn/amneziawg-go)
+- Windows GUI toolkit: [lxn/walk](https://github.com/lxn/walk)
+- Psiphon Tunnel Core: [Psiphon-Labs/psiphon-tunnel-core](https://github.com/Psiphon-Labs/psiphon-tunnel-core)
