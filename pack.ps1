@@ -1,11 +1,11 @@
-# pack.ps1 — assemble the portable XEHN ZIP (v2rayN-style layout).
+# pack.ps1 — assemble the portable VEGSH ZIP (v2rayN-style layout).
 #
 #   .\pack.ps1 [-MihomoPath <path>] [-PsiphonExePath <path>] [-PsiphonConfigPath <path>]
 #              [-Version <tag>] [-SkipBuild]
 #
 # Layout produced in dist\:
-#   XEHN\
-#   ├── xehn.exe          ← the only program file: double-click opens the GUI;
+#   VEGSH\
+#   ├── vegsh.exe          ← the only program file: double-click opens the GUI;
 #   │                       arguments run the CLI in the calling terminal
 #   ├── core\
 #   │   ├── mihomo.exe    ← the Clash core, updatable independently
@@ -34,8 +34,8 @@ $ErrorActionPreference = 'Stop'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $dist = Join-Path $here 'dist'
 $buildDir = Join-Path $dist 'build'
-$bin = Join-Path $buildDir 'xehn.exe'
-$root = Join-Path $dist 'XEHN'
+$bin = Join-Path $buildDir 'vegsh.exe'
+$root = Join-Path $dist 'VEGSH'
 $stamp = Get-Date -Format 'yyyyMMddHHmmss'
 if (-not $Version) { $Version = "0.3.0-$stamp" }
 
@@ -88,7 +88,7 @@ if (-not $SkipBuild) {
     if ($LASTEXITCODE -ne 0) { Pop-Location; throw "single windowsgui build failed" }
 
     Pop-Location
-    Write-Host "built xehn.exe ($Version)"
+    Write-Host "built vegsh.exe ($Version)"
 } elseif (-not (Test-Path $bin)) {
     throw "-SkipBuild given but $bin is missing; run pack.ps1 without -SkipBuild first"
 }
@@ -110,7 +110,7 @@ if (Test-Path $acctFile) {
         $exeText = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($bin))
         foreach ($k in $localKeys) {
             if ($exeText.Contains($k)) {
-                throw "refusing to package: xehn.exe embeds this machine's WARP credentials (a private key or token from warpscout-account.json was found in the binary)"
+                throw "refusing to package: vegsh.exe embeds this machine's WARP credentials (a private key or token from warpscout-account.json was found in the binary)"
             }
         }
         Write-Host "verified: no local WARP credentials embedded in the exe"
@@ -131,7 +131,7 @@ if (Test-Path $legacyGUI) {
 if (Test-Path $root) { Remove-Item $root -Recurse -Force }
 New-Item -ItemType Directory -Force -Path "$root\core" | Out-Null
 
-Copy-Item $bin (Join-Path $root 'xehn.exe')
+Copy-Item $bin (Join-Path $root 'vegsh.exe')
 
 # Core: a release ZIP without mihomo.exe is the number-one cause of first-run
 # "Clash 核心不可用" reports. Default to the core in the source tree and refuse
@@ -214,7 +214,7 @@ if (Test-Path $gpl) {
 # registers a new device on the recipient's first connect/scan.
 $forbiddenNames = @(
     'warpscout-account.json', 'state.json', 'settings.json', 'cache.json',
-    'config.yaml', 'cache.db', 'xehn.log', 'psiphon-regions.json',
+    'config.yaml', 'cache.db', 'vegsh.log', 'psiphon-regions.json',
     'vpngate-underlay.json', 'vpngate-failed.json', 'vpngate-last.json',
     'vpngate-nodes.json', 'vpngate-nodes-v2.json'
 )
@@ -229,8 +229,8 @@ if ($leaks.Count -gt 0) {
 }
 
 $topExes = @(Get-ChildItem $root -File -Filter *.exe)
-if ($topExes.Count -ne 1 -or $topExes[0].Name -ne 'xehn.exe') {
-    throw "release must expose exactly one top-level program: xehn.exe"
+if ($topExes.Count -ne 1 -or $topExes[0].Name -ne 'vegsh.exe') {
+    throw "release must expose exactly one top-level program: vegsh.exe"
 }
 
 # Smart App Control / SmartScreen judge an unsigned exe by its EXACT file hash.
@@ -239,11 +239,11 @@ if ($topExes.Count -ne 1 -or $topExes[0].Name -ne 'xehn.exe') {
 # reputation and is blocked (Code Integrity 3077/3033) until it is indexed.
 # Rebuilding overwrites the hash and throws that reputation away, so freeze the
 # binary at release time and print the hash that must be kept.
-$exeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path $root 'xehn.exe')).Hash
-Write-Host "xehn.exe SHA256: $exeHash"
+$exeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path $root 'vegsh.exe')).Hash
+Write-Host "vegsh.exe SHA256: $exeHash"
 Write-Host "IMPORTANT: publish this exact binary and do NOT rebuild/overwrite it. A new hash resets Microsoft cloud reputation and will be blocked by Smart App Control until indexed again."
 # NOTE: core\mihomo.exe and core\psiphon.exe are separate PE images checked by
-# SAC at launch as well (xehn.log: "An Application Control policy has blocked
+# SAC at launch as well (vegsh.log: "An Application Control policy has blocked
 # this file"); keep those binaries fixed for the same reason.
 
 $bundledCore = Join-Path $root 'core\mihomo.exe'
@@ -254,7 +254,7 @@ if (-not (Test-Path $bundledCore) -or (Get-Item $bundledCore).Length -lt 1MB) {
 # Zip it. Compress-Archive opens every file without sharing, and a freshly
 # written 20 MB exe is often still being scanned by Defender at that moment:
 # retry a few times, then fall back to the .NET API, which opens read-only.
-$zip = Join-Path $dist "XEHN.$Version.zip"
+$zip = Join-Path $dist "VEGSH.$Version.zip"
 if (Test-Path $zip) { Remove-Item $zip -Force }
 $zipped = $false
 for ($i = 1; $i -le 3 -and -not $zipped; $i++) {
@@ -283,24 +283,24 @@ try {
     $archive.Dispose()
 }
 $leakedEntries = @($entries | Where-Object {
-    $_ -match '(^|/)(warpscout-account\.json|state\.json|settings\.json|cache\.json|config\.yaml|cache\.db|xehn\.log|psiphon-regions\.json)$' -or
+    $_ -match '(^|/)(warpscout-account\.json|state\.json|settings\.json|cache\.json|config\.yaml|cache\.db|vegsh\.log|psiphon-regions\.json)$' -or
     $_ -match '(^|/)vpngate-.*\.json$' -or
     $_ -match '(^|/)warp-report-.*\.txt$'
 })
 if ($leakedEntries.Count -gt 0) {
     throw "archive contains credentials/runtime state: $($leakedEntries -join ', ')"
 }
-$zipExes = @($entries | Where-Object { $_ -match '^XEHN/[^/]+\.exe$' })
+$zipExes = @($entries | Where-Object { $_ -match '^VEGSH/[^/]+\.exe$' })
 if ($zipExes.Count -ne 1) {
     throw "archive must contain exactly one top-level program, found: $($zipExes -join ', ')"
 }
-if (-not ($entries -contains 'XEHN/core/mihomo.exe')) {
-    throw "archive is missing XEHN/core/mihomo.exe - this build would fail on first launch"
+if (-not ($entries -contains 'VEGSH/core/mihomo.exe')) {
+    throw "archive is missing VEGSH/core/mihomo.exe - this build would fail on first launch"
 }
 
 Write-Host ""
 Write-Host "ZIP ready: $zip ($([math]::Round((Get-Item $zip).Length/1MB,1)) MB)"
-Write-Host "One program: xehn.exe (no account data in the archive)"
+Write-Host "One program: vegsh.exe (no account data in the archive)"
 Write-Host "Layout:"
 Get-ChildItem $root -Recurse -File | ForEach-Object {
     Write-Host ("  " + $_.FullName.Substring($root.Length + 1) + "  ($([math]::Round($_.Length/1MB,2)) MB)")

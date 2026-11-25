@@ -407,7 +407,7 @@ func runNativeGUI(ctx context.Context, _ options) error {
 	if sb := mw.StatusBar(); sb != nil {
 		sb.SetVisible(false)
 	}
-	mw.SetTitle("XEHN VPN Client")
+	mw.SetTitle("VEGSH VPN Client")
 	// Design units are 96-DPI logical pixels, so the initial client is scaled by
 	// the display DPI: on a 200% screen the same window would otherwise open at
 	// half its intended apparent size with tiny text. fitDesignWindow caps and
@@ -768,7 +768,7 @@ func enableDPIAwareness() {
 // ---------------------------------------------------------------------------
 
 // guardLogLoop mirrors the detached health guard's findings into the log panel.
-// The guard is a separate process whose stderr lands in xehn.log, not in this
+// The guard is a separate process whose stderr lands in vegsh.log, not in this
 // window's in-memory log; without this mirror a guard-driven repair or give-up
 // flips the home tile to "disconnected" with no explanation on screen (the
 // "connected then disconnected, but the log says nothing" report). Only lines
@@ -779,7 +779,7 @@ func (u *natUI) guardLogLoop() {
 	if err != nil {
 		return
 	}
-	path := filepath.Join(home, "xehn.log")
+	path := filepath.Join(home, "vegsh.log")
 	var offset int64
 	if fi, serr := os.Stat(path); serr == nil {
 		offset = fi.Size()
@@ -1565,12 +1565,12 @@ func (u *natUI) exitV6OK() bool {
 // two causes look identical in a log line but need different fixes.
 func coreMissingHint(dir, bin string) string {
 	if _, err := os.Stat(dir); err != nil {
-		return tr("内核缺失：当前目录下没有 core 文件夹。请解压整个压缩包后再运行 xehn.exe（不要只把 exe 单独拿出来）。")
+		return tr("内核缺失：当前目录下没有 core 文件夹。请解压整个压缩包后再运行 vegsh.exe（不要只把 exe 单独拿出来）。")
 	}
 	if fi, err := os.Stat(bin); err == nil && fi.Size() == 0 {
 		return tr("内核文件 core\\mihomo.exe 是 0 字节（下载或解压中断），请删掉它后用底栏「核心」按钮重新下载。")
 	}
-	return tr("内核缺失：core\\mihomo.exe 不存在。多数情况是被杀毒软件隔离，请把 XEHN 目录加入白名单后，用底栏「核心」按钮重新下载。")
+	return tr("内核缺失：core\\mihomo.exe 不存在。多数情况是被杀毒软件隔离，请把 VEGSH 目录加入白名单后，用底栏「核心」按钮重新下载。")
 }
 
 func (u *natUI) probeCore() {
@@ -1599,7 +1599,7 @@ func (u *natUI) probeCore() {
 			// A file that exists but cannot be executed is almost always a
 			// security product or Smart App Control, not a broken download.
 			// Give the exact recovery steps instead of the generic "请升级核心".
-			u.addLog(tr("核心文件存在却无法运行时：请把 XEHN 目录加入杀毒软件白名单；右键 xehn.exe 与 core\\mihomo.exe → 属性 → 勾选「解除锁定」；Windows 安全中心检查「智能应用控制」是否拦截。完成后重启程序"), true)
+			u.addLog(tr("核心文件存在却无法运行时：请把 VEGSH 目录加入杀毒软件白名单；右键 vegsh.exe 与 core\\mihomo.exe → 属性 → 勾选「解除锁定」；Windows 安全中心检查「智能应用控制」是否拦截。完成后重启程序"), true)
 		} else {
 			var ok []string
 			for _, r := range protoRuns {

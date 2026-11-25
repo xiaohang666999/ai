@@ -40,10 +40,10 @@ func isPolicyBlocked(err error) bool {
 }
 
 // Psiphon wraps the external Psiphon executable as a localhost SOCKS5 proxy
-// (V1 exit). xehn starts it, learns the dynamic SOCKS port from the
+// (V1 exit). vegsh starts it, learns the dynamic SOCKS port from the
 // ListeningSocksProxyPort notice, renders a mihomo config that egresses through
 // that port, and stops it on disconnect. Psiphon itself owns server discovery,
-// selection, protocol, obfuscation, tactics and the tunnel — xehn does
+// selection, protocol, obfuscation, tactics and the tunnel — vegsh does
 // none of that. This file is the lifecycle only: no health guard, no repair
 // loop, no endpoint manager, no GUI.
 type Psiphon struct {

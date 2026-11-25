@@ -130,8 +130,8 @@ func measureProxyDelays(ctx context.Context, apiPort int, proxies []ProxySpec, l
 		// The group call only reports the survivors, so a "0/N" run says nothing
 		// about WHY. For small lists (the common case: a handful of nodes) the
 		// extra probe per failure is cheap and the reason is worth showing;
-		// XEHN_PROBE_VERBOSE forces it on for large lists too.
-		if logf != nil && (len(proxies) <= 10 || os.Getenv("XEHN_PROBE_VERBOSE") != "") {
+		// VEGSH_PROBE_VERBOSE forces it on for large lists too.
+		if logf != nil && (len(proxies) <= 10 || os.Getenv("VEGSH_PROBE_VERBOSE") != "") {
 			for _, p := range proxies {
 				if !failed[p.Name] {
 					continue
@@ -182,7 +182,7 @@ func measureProxyDelays(ctx context.Context, apiPort int, proxies []ProxySpec, l
 			} else {
 				failed[name] = true
 			}
-			// log.Printf goes to xehn.log (the GUI redirects stderr there), so a
+			// log.Printf goes to vegsh.log (the GUI redirects stderr there), so a
 			// 0/N report leaves evidence on disk instead of only in the panel.
 			if err != nil {
 				log.Printf("probe delay %q failed: %v", name, err)
@@ -222,7 +222,7 @@ func withTempCore(ctx context.Context, tag string, build func(mixedPort, apiPort
 	// the connect path does, then point EnsureBinary at the bundled file, so a
 	// probe on a fresh install never downloads a 60 MB release.
 	syncBundledResources(cDir)
-	bundled := os.Getenv("XEHN_PROBE_CORE") // diagnostic/test override
+	bundled := os.Getenv("VEGSH_PROBE_CORE") // diagnostic/test override
 	if bundled == "" {
 		if exe, eerr := os.Executable(); eerr == nil {
 			p := filepath.Join(filepath.Dir(exe), coreDirName, core.ExeName())
@@ -243,14 +243,14 @@ func withTempCore(ctx context.Context, tag string, build func(mixedPort, apiPort
 	if err != nil {
 		return err
 	}
-	workDir, err := os.MkdirTemp("", "xehn-probe-")
+	workDir, err := os.MkdirTemp("", "vegsh-probe-")
 	if err != nil {
 		return err
 	}
-	// XEHN_KEEP_PROBE_DIR keeps the throwaway core's directory (config + log) for
+	// VEGSH_KEEP_PROBE_DIR keeps the throwaway core's directory (config + log) for
 	// diagnosis: a probe that reports 0/N without any visible reason needs its
 	// generated YAML and core log inspected after the fact.
-	if os.Getenv("XEHN_KEEP_PROBE_DIR") == "" {
+	if os.Getenv("VEGSH_KEEP_PROBE_DIR") == "" {
 		defer os.RemoveAll(workDir)
 	} else {
 		fmt.Fprintf(os.Stderr, "probe dir kept: %s\n", workDir)

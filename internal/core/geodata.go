@@ -88,7 +88,7 @@ func fetchToFile(ctx context.Context, client *http.Client, url, dst string, min 
 	if err != nil {
 		return 0, err
 	}
-	req.Header.Set("User-Agent", "xehn")
+	req.Header.Set("User-Agent", "vegsh")
 	resp, err := client.Do(req)
 	if err != nil {
 		return 0, err

@@ -74,7 +74,7 @@ func countryTrace(ctx context.Context, socksPort int) (string, error) {
 	tlsConn := tls.Client(conn, &tls.Config{ServerName: "www.cloudflare.com"})
 	defer tlsConn.Close()
 	_ = tlsConn.SetDeadline(time.Now().Add(subGeoTimeout))
-	req := "GET /cdn-cgi/trace HTTP/1.1\r\nHost: www.cloudflare.com\r\nUser-Agent: xehn/1.0\r\nConnection: close\r\n\r\n"
+	req := "GET /cdn-cgi/trace HTTP/1.1\r\nHost: www.cloudflare.com\r\nUser-Agent: vegsh/1.0\r\nConnection: close\r\n\r\n"
 	if _, err := tlsConn.Write([]byte(req)); err != nil {
 		return "", err
 	}
@@ -110,7 +110,7 @@ func countryTraceIPAPI(ctx context.Context, socksPort int) (string, error) {
 	}
 	defer conn.Close()
 	_ = conn.SetDeadline(time.Now().Add(subGeoFallbackTimeout))
-	req := "GET /json/?fields=status,countryCode HTTP/1.1\r\nHost: ip-api.com\r\nUser-Agent: xehn/1.0\r\nConnection: close\r\n\r\n"
+	req := "GET /json/?fields=status,countryCode HTTP/1.1\r\nHost: ip-api.com\r\nUser-Agent: vegsh/1.0\r\nConnection: close\r\n\r\n"
 	if _, err := conn.Write([]byte(req)); err != nil {
 		return "", err
 	}

@@ -124,7 +124,7 @@ func base64ToHex(b64 string) (string, error) {
 
 func baseUAPI(awg bool) (string, error) {
 	if warpPrivateKey == "" {
-		return "", fmt.Errorf("尚未注册 WARP 账号：首次连接会自动注册，若一直失败请检查网络或运行 xehn register")
+		return "", fmt.Errorf("尚未注册 WARP 账号：首次连接会自动注册，若一直失败请检查网络或运行 vegsh register")
 	}
 	privHex, err := base64ToHex(warpPrivateKey)
 	if err != nil {

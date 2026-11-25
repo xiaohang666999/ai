@@ -207,7 +207,7 @@ func processImagePath(pid int) (string, bool) {
 	return windows.UTF16ToString(buf[:]), true
 }
 
-// KillStalePortableCores terminates cores belonging to ANY XEHN portable folder,
+// KillStalePortableCores terminates cores belonging to ANY VEGSH portable folder,
 // not just the copy this build runs from.
 //
 // Updating by extracting a new folder (the normal flow for this app) leaves the
@@ -216,7 +216,7 @@ func processImagePath(pid int) (string, bool) {
 // the image path differs from the current build's.
 //
 // The match is deliberately narrow — the file must be the core executable AND
-// its path must contain "xehn" — so a Clash Party / Verge sidecar
+// its path must contain "vegsh" — so a Clash Party / Verge sidecar
 // ("...\resources\sidecar\mihomo.exe") is never touched.
 func KillStalePortableCores() int {
 	want := strings.ToLower(ExeName())
@@ -245,7 +245,7 @@ func KillStalePortableCores() int {
 			continue
 		}
 		lower := strings.ToLower(image)
-		if !strings.Contains(lower, "xehn") {
+		if !strings.Contains(lower, "vegsh") {
 			continue
 		}
 		if err := KillByPID(pid, image); err == nil {

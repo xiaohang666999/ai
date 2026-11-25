@@ -11,7 +11,7 @@ import (
 // launching the exe again must raise that window rather than start a second
 // instance — two clients share one mixed port and one health-owner claim, and
 // the second one always loses in ways that look like a broken program.
-const instanceMutexName = "xehn-single-instance"
+const instanceMutexName = "vegsh-single-instance"
 
 var instanceMutex windows.Handle
 
@@ -47,13 +47,13 @@ func claimSingleInstance() bool {
 // so instead of exiting silently, which would look like the program refusing to
 // start.
 func focusExistingWindow() {
-	title, _ := windows.UTF16PtrFromString("XEHN VPN Client")
+	title, _ := windows.UTF16PtrFromString("VEGSH VPN Client")
 	if hwnd := win.FindWindow(nil, title); hwnd != 0 {
 		win.ShowWindow(hwnd, win.SW_RESTORE)
 		win.SetForegroundWindow(hwnd)
 		return
 	}
-	text, _ := windows.UTF16PtrFromString("XEHN 已在运行（可能在系统托盘中）。\r\n请在托盘图标上点左键打开窗口。")
+	text, _ := windows.UTF16PtrFromString("VEGSH 已在运行（可能在系统托盘中）。\r\n请在托盘图标上点左键打开窗口。")
 	caption, _ := windows.UTF16PtrFromString(productName)
 	win.MessageBox(0, text, caption, win.MB_OK|win.MB_ICONINFORMATION)
 }

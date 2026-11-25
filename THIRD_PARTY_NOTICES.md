@@ -1,14 +1,15 @@
 # Third-party notices
 
-`warp-client` is this repository's own code. The portable ZIP additionally
-**bundles** two independent third-party executables under `core\`. Both are run
-as **separate processes and driven over local endpoints**:
+`VEGSH` (source package `warp-client`) is this repository's own code. The
+portable ZIP additionally **bundles** two independent third-party executables
+under `core\`. Both are run as **separate processes and driven over local
+endpoints**:
 
 - **mihomo** — generated `config.yaml` + its localhost `mixed-port` and REST controller.
 - **Psiphon** — generated client config + its localhost SOCKS5 listener.
 
-Neither is linked into, imported by, or statically combined with the
-`warp-client` binary.
+Neither is linked into, imported by, or statically combined with the `VEGSH`
+binary.
 
 | component | file in the ZIP | license | upstream |
 |---|---|---|---|
@@ -43,10 +44,10 @@ programs. At minimum:
    `import psiphon-tunnel-core` or link mihomo into your own binary: that would
    make your binary a derivative work of a GPL-3.0 program.
 
-## Linked libraries (compiled into xehn.exe)
+## Linked libraries (compiled into vegsh.exe)
 
 Unlike the `core\` binaries above, these are Go packages **linked into** the
-`xehn.exe` image, so their license terms apply to the binary itself:
+`vegsh.exe` image, so their license terms apply to the binary itself:
 
 | component | license | location |
 |---|---|---|
