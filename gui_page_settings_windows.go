@@ -584,20 +584,31 @@ func (u *natUI) paintSetExit(c *walk.Canvas, x, y, w float64) {
 // ---------------------------------------------------------------------------
 
 // aboutLink is one clickable row of the link card: the label the user reads and
-// the address the row opens. Every one of them is a GitHub URL — the About page
-// never points at a folder on this disk, because a path is useless to anyone
-// reading the page on another machine (or on a screenshot).
+// the address the row opens. Every row is an upstream open-source project the
+// client is built on — the card never names this project's own home, and never
+// points at a folder on this disk: a path is useless to anyone reading the page
+// on another machine (or on a screenshot).
 type aboutLink struct {
 	id, label, url string
 }
 
+// aboutLinkURL resolves a link-card row id to its address.
+func aboutLinkURL(id string) (string, bool) {
+	for _, ln := range aboutLinks() {
+		if ln.id == id {
+			return ln.url, true
+		}
+	}
+	return "", false
+}
+
 func aboutLinks() []aboutLink {
 	return []aboutLink{
-		{"about:project", tr("项目主页"), repoURL},
-		{"about:releases", tr("发布页"), repoReleasesURL},
-		{"about:issues", tr("问题反馈"), repoIssuesURL},
-		{"about:notices", tr("第三方声明"), repoNoticesURL},
-		{"about:license", tr("许可全文"), repoLicenseURL},
+		{"about:core", tr("mihomo 内核"), coreRepoURL},
+		{"about:awg", tr("AmneziaWG"), "https://github.com/amnezia-vpn/amneziawg-go"},
+		{"about:walk", tr("lxn/walk"), "https://github.com/lxn/walk"},
+		{"about:warpscout", tr("warpscout 扫描引擎"), "https://github.com/vernette/warpscout"},
+		{"about:psiphon", tr("Psiphon"), "https://github.com/Psiphon-Labs/psiphon-tunnel-core"},
 	}
 }
 
@@ -717,7 +728,6 @@ func (u *natUI) paintAbout(c *walk.Canvas, x, y, w float64) {
 		{tr("核心版本"), orEmpty(u.m.coreVersion, tr("未探测"))},
 	},
 		aboutAct{"about:copydiag", tr("复制诊断信息"), false, true},
-		aboutAct{"about:project", tr("打开项目主页"), true, true},
 	)
 
 	u.aboutStrip(c, x, card2, w, tr("开源与许可"), [][2]string{
@@ -739,7 +749,6 @@ func (u *natUI) paintAbout(c *walk.Canvas, x, y, w float64) {
 		{tr("最新版本"), orEmpty(u.m.updLatest, tr("尚未检查"))},
 		{tr("状态"), orEmpty(u.m.updNote, tr("点击右侧按钮检查更新"))},
 	},
-		aboutAct{"about:releases", tr("打开发布页"), false, true},
 		aboutAct{updID, updLabel, true, !u.m.updBusy},
 	)
 
@@ -761,7 +770,7 @@ func (u *natUI) paintAbout(c *walk.Canvas, x, y, w float64) {
 
 	// The link card: one address per row, full width, the whole row clickable.
 	u.cardPlain(c, x, links, w, aboutLinkH)
-	u.txt(c, x+16, links+8, 200, 22, tr("项目链接"), u.f.f11b, th.text)
+	u.txt(c, x+16, links+8, 200, 22, tr("开源项目"), u.f.f11b, th.text)
 	for i, ln := range aboutLinks() {
 		ly := links + 34 + float64(i)*aboutLinkStep
 		r := u.r(x+10, ly-1, w-20, aboutLinkStep-2)

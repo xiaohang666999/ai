@@ -14,18 +14,20 @@ import (
 	"time"
 )
 
-// This client's own home. Everything the About page shows — the project page,
-// the releases, the issue tracker, the notices and the licence — points here,
-// so no card ever sends the user hunting through a local folder.
+// This client's own home. It is deliberately left unset: the repository, the
+// release feed, the issue tracker and the remote stop list all belong to a
+// deployment, not to the program, so nothing here names a personal account.
+// Every consumer treats an empty value as "not configured" and degrades
+// quietly instead of pointing the About page at a stranger's repository.
 const (
-	repoOwner = "hezhanleiok"
-	repoName  = "xehn"
-	repoURL   = "https://github.com/" + repoOwner + "/" + repoName
+	repoOwner = ""
+	repoName  = "warp-client"
+	repoURL   = ""
 
-	repoReleasesURL = repoURL + "/releases"
-	repoIssuesURL   = repoURL + "/issues"
-	repoNoticesURL  = repoURL + "/blob/main/THIRD_PARTY_NOTICES.md"
-	repoLicenseURL  = repoURL + "/blob/main/third_party/GPL-3.0.txt"
+	repoReleasesURL = ""
+	repoIssuesURL   = ""
+	repoNoticesURL  = ""
+	repoLicenseURL  = ""
 	// coreRepoURL is where the mihomo core comes from: the client downloads
 	// its releases rather than building it, so this is the "core source" the
 	// About card names instead of a path on this disk.
@@ -33,7 +35,7 @@ const (
 )
 
 const (
-	ghLatestURL = "https://api.github.com/repos/" + repoOwner + "/" + repoName + "/releases/latest"
+	ghLatestURL = ""
 
 	updateCheckTimeout = 2 * time.Second
 	updateCacheTTL     = 6 * time.Hour
@@ -145,6 +147,10 @@ func writeVersionCache(path, version string) {
 // unreachable" are different facts, and the update card must not report the
 // first one as the second.
 func fetchLatestVersion(ctx context.Context) (version string, answered bool) {
+	// No release feed is configured: stay silent rather than guess at one.
+	if ghLatestURL == "" {
+		return "", false
+	}
 	ctx, cancel := context.WithTimeout(ctx, updateCheckTimeout)
 	defer cancel()
 

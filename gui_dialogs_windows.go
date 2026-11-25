@@ -360,7 +360,7 @@ func (u *natUI) showStartupNotice() {
 		tr("不提供、不代理任何服务器资源，请遵守当地法律法规。"),
 		"",
 		tr("如果你是通过付费渠道拿到本软件的，说明你被骗了；"),
-		tr("请到项目主页免费下载：") + shortURL(repoURL),
+		tr("本软件完全免费，可从任何正规渠道获取，无需付费。"),
 	})
 }
 
@@ -373,7 +373,7 @@ func (u *natUI) controlStoppedDialog() {
 	}
 	u.infoDialog(tr("客户端已停用"), msg, []string{
 		tr("控制码：") + u.m.set.ControlCode,
-		tr("如有疑问，请到项目主页反馈：") + shortURL(repoIssuesURL),
+		tr("如有疑问，请向软件分发者说明使用场景。"),
 	})
 }
 
@@ -383,6 +383,9 @@ func (u *natUI) controlStoppedDialog() {
 
 // openURL hands a URL to the shell's default handler.
 func openURL(url string) {
+	if url == "" {
+		return
+	}
 	_ = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
 }
 

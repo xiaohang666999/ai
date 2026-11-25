@@ -18,8 +18,12 @@ import (
 // swap it in. The swap is a rename dance — Windows refuses to overwrite a
 // running image but happily renames one — so the new binary can be put in place
 // while this process is still alive, and the restart happens after it exits.
+//
+// The release feed is left unset on purpose (see version.go): a build that has
+// not been given one keeps its manual update path and reports "not configured"
+// instead of downloading code from somebody else's repository.
 const (
-	ghReleaseURL   = "https://api.github.com/repos/" + repoOwner + "/" + repoName + "/releases/latest"
+	ghReleaseURL   = ""
 	updateTimeout  = 10 * time.Minute
 	updateMinBytes = 8 << 20 // a real xehn.exe is ~20 MB; anything smaller is an error page
 )
@@ -43,6 +47,9 @@ func (r *releaseInfo) Version() string { return strings.TrimPrefix(r.Tag, "v") }
 // fetchLatestVersion this needs the asset list, so it asks the API directly
 // rather than the cached version file.
 func fetchLatestRelease(ctx context.Context) (*releaseInfo, error) {
+	if ghReleaseURL == "" {
+		return nil, fmt.Errorf("未配置发布源")
+	}
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 

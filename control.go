@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-// Remote control: every install carries a code, and the maintainer publishes a
+// Remote control: every install carries a code, and the operator publishes a
 // list of codes that must stop working. It is the only lever that reaches a
 // build already in someone's hands — no release, no rebuild, no local files.
 //
@@ -25,9 +25,13 @@ import (
 // ordinary case, not to win an arms race.
 const (
 	// controlListURL is the published stop list. Editing this file on the
-	// default branch is what "remote stop" means; the client re-reads it at
-	// startup and every controlCheckEvery while it runs.
-	controlListURL    = "https://raw.githubusercontent.com/hezhanleiok/xehn/main/control.json"
+	// deployment's default branch is what "remote stop" means; the client
+	// re-reads it at startup and every controlCheckEvery while it runs.
+	//
+	// It is empty by default: the list belongs to whoever deploys the client,
+	// and an install that was never given one simply stays active instead of
+	// polling a stranger's repository.
+	controlListURL    = ""
 	controlStateName  = "control-state.json"
 	controlTimeout    = 8 * time.Second
 	controlCheckEvery = 15 * time.Minute
@@ -189,6 +193,11 @@ func saveControlState(st controlState) error {
 // a 404 means the file was moved, and treating that as "nobody is stopped"
 // would silently disable the whole channel.
 func fetchControlList(ctx context.Context) (*controlList, error) {
+	// No list configured: nothing to enforce. The caller treats this as an
+	// unreachable check, which is fail-open by design.
+	if controlListURL == "" {
+		return nil, fmt.Errorf("unconfigured control list")
+	}
 	return fetchControlListURL(ctx, controlListURL)
 }
 
@@ -254,7 +263,7 @@ func applyControlList(list *controlList, code string, prev controlState, now tim
 	return out
 }
 
-const defaultStopMessage = "该控制码已被远程停用，请联系作者说明使用场景。"
+const defaultStopMessage = "该控制码已被远程停用，请向软件分发者说明使用场景。"
 
 func containsControlCode(list []string, code string) bool {
 	if code == "" {

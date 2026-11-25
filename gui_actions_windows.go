@@ -468,7 +468,7 @@ func (u *natUI) actionAbout(id string) {
 			u.addLog(tr("诊断信息已复制到剪贴板"), false)
 		}
 	case "about:copycode":
-		// The code is what the maintainer needs to stop (or un-stop) this
+		// The code is what the operator needs to stop (or un-stop) this
 		// install, so copying it beats asking the user to retype 16 characters.
 		if err := setClipboardText(u.m.set.ControlCode); err != nil {
 			u.addLog(tr("复制失败")+": "+err.Error(), true)
@@ -480,16 +480,11 @@ func (u *natUI) actionAbout(id string) {
 	case "about:opendata":
 		// Still used by the Logs page's diagnostics tab.
 		u.openDataDir()
-	case "about:project":
-		openURL(repoURL)
-	case "about:releases":
-		openURL(repoReleasesURL)
-	case "about:issues":
-		openURL(repoIssuesURL)
-	case "about:notices":
-		openURL(repoNoticesURL)
-	case "about:license":
-		openURL(repoLicenseURL)
+	}
+	// The link card's rows are upstream projects; opening one is the same
+	// action whatever the row, so they share the branch below.
+	if url, ok := aboutLinkURL(id); ok {
+		openURL(url)
 	}
 }
 
@@ -511,6 +506,12 @@ func (u *natUI) actionUpdate(id string) {
 				u.m.updChecked = true
 				u.m.updTime = time.Now()
 				switch {
+				case ghLatestURL == "":
+					// This build ships without a release feed, so there is
+					// nothing to check and nothing to blame on the network.
+					u.m.updLatest = ""
+					u.m.updAvail = ""
+					u.m.updNote = tr("本版本未配置发布源")
 				case !answered:
 					u.m.updLatest = ""
 					u.m.updAvail = ""
@@ -521,7 +522,7 @@ func (u *natUI) actionUpdate(id string) {
 					// that simply does not exist.
 					u.m.updLatest = ""
 					u.m.updAvail = ""
-					u.m.updNote = tr("发布页还没有 Release，可到项目主页查看进度")
+					u.m.updNote = tr("发布页还没有 Release，可稍后再试")
 				default:
 					u.m.updLatest = latest
 					if newerVersion(latest, resolveVersion()) {

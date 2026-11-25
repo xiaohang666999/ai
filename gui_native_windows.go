@@ -856,6 +856,12 @@ func (u *natUI) startControlCheck(manual bool) {
 				u.addLog(tr("远程控制状态保存失败")+": "+err.Error(), true)
 			}
 			switch {
+			case controlListURL == "":
+				// No stop list configured for this build: the check has
+				// nothing to enforce, so it says so only when asked.
+				if manual {
+					u.addLog(tr("远程控制：本版本未配置停用名单"), false)
+				}
 			case st.Stopped && !wasStopped:
 				u.addLog(tr("远程控制：本机控制码已被停用"), true)
 				if u.m.connected && !u.m.working {

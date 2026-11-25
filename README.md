@@ -5,8 +5,8 @@ connects through it in one click — built on top of
 [`vernette/warpscout`](https://github.com/vernette/warpscout)'s scanning engine
 with an embedded Clash (mihomo) core for actual traffic routing.
 
-**Download:** [latest release](https://github.com/hezhanleiok/xehn/releases/latest)
-— unzip the portable package anywhere writable and double-click
+**Download:** build it yourself (see [Build](#build)) or unzip a portable
+package from your distribution channel anywhere writable and double-click
 `xehn.exe`. The package carries no account: the first connect registers
 a fresh WARP device for that machine.
 
@@ -145,15 +145,18 @@ Every launch opens with the licence reminder this project asks its builds to
 carry — **本软件开源免费，仅供学习交流使用，禁止售卖！** — and the same
 sentence stays at the foot of the About page, so it is still there after the
 notice has been dismissed. The About page itself points at nothing local: every
-row and button opens a GitHub address (project page, releases, issues, notices,
-licence text, core source), because a path on this disk is useless to anyone
-reading the page on another machine.
+row of its link card opens an **upstream open-source project** — the mihomo
+core, AmneziaWG, `lxn/walk`, `warpscout` and Psiphon — because a path on this
+disk is useless to anyone reading the page on another machine. This project's
+own address is deliberately not baked in: a deployment that wants update checks
+or a remote stop list sets them itself (see below).
 
 Each install also carries a **control code** (`XXXX-XXXX-XXXX-XXXX`, shown and
 copyable on About), derived from the machine's Windows identity — so deleting
-`settings.json` does not mint a fresh one. The client reads
-[`control.json`](control.json) from the default branch at startup and every 15
-minutes:
+`settings.json` does not mint a fresh one. The stop list is **not** baked in:
+`controlListURL` in `control.go` ships empty, and a build that leaves it empty
+simply never polls. Point it at your own copy of `control.json` to enable the
+channel; the client then reads it at startup and every 15 minutes:
 
 ```json
 {
@@ -172,10 +175,11 @@ so a restart cannot quietly put a stopped client back into service.
 
 ### Updating
 
-The About page checks `/releases/latest`; when a newer release exists its button
-becomes **Update to vX**. One click downloads the portable ZIP, checks that the
-program inside is a real PE image of plausible size, swaps it in place and
-restarts. The running image is renamed aside rather than overwritten — Windows
+The About page checks the release feed configured in `version.go`
+(`ghLatestURL`, empty by default so a stock build never calls out to anyone's
+repository); when a newer release exists its button becomes **Update to vX**.
+One click downloads the portable ZIP, checks that the program inside is a real
+PE image of plausible size, swaps it in place and restarts. The running image is renamed aside rather than overwritten — Windows
 forbids the latter — so a failed swap rolls back and leaves the current build
 working; the backup is cleared on the next start.
 
@@ -247,9 +251,9 @@ Requires Go 1.26+ (module targets 1.26.3). On networks where
 `proxy.golang.org` is unreachable, point Go at a mirror:
 
 ```powershell
-$env:GOMODCACHE='E:\xiaohe\xhwarp\.gomod'
-$env:GOCACHE='E:\xiaohe\xhwarp\.gocache'
-$env:GOPATH='E:\xiaohe\xhwarp\.gopath'
+$env:GOMODCACHE='D:\go-cache\.gomod'
+$env:GOCACHE='D:\go-cache\.gocache'
+$env:GOPATH='D:\go-cache\.gopath'
 $env:GOPROXY='https://goproxy.cn,direct'
 
 # one program file: double-click opens the GUI, arguments run the CLI
