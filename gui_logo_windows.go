@@ -37,10 +37,8 @@ func logoImage() image.Image {
 	return logoSrc
 }
 
-// logoAspect is the brand mark's height/width. The approved art is 512x321, so
-// every placement derives its height from the width it is given instead of
-// assuming a square (the old square asset stretched the XH mark).
-const logoAspect = 321.0 / 512.0
+// logoAspect is the generated square app icon's height/width.
+const logoAspect = 1.0
 
 // drawLogo paints the logo at a design-grid rect (x, y, size), replacing the
 // vector brand mark. size is the WIDTH; the height follows the mark's aspect.
