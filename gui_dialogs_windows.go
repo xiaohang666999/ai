@@ -352,19 +352,6 @@ func (u *natUI) infoDialog(title, headline string, lines []string) {
 	dlg.Run()
 }
 
-// controlStoppedDialog explains a remote stop: what happened, which code this
-// install reports, and where to ask about it.
-func (u *natUI) controlStoppedDialog() {
-	msg := strings.TrimSpace(u.m.control.Message)
-	if msg == "" {
-		msg = defaultStopMessage
-	}
-	u.infoDialog(tr("客户端已停用"), msg, []string{
-		tr("控制码：") + u.m.set.ControlCode,
-		tr("如有疑问，请向软件分发者说明使用场景。"),
-	})
-}
-
 // ---------------------------------------------------------------------------
 // Shell helpers
 // ---------------------------------------------------------------------------

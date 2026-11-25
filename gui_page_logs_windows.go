@@ -50,7 +50,7 @@ func (u *natUI) paintLogActions(c *walk.Canvas, x, y, w float64) {
 		}{
 			{"about:copydiag", tr("复制诊断信息"), true},
 			{"about:opendata", tr("打开数据目录"), false},
-			{"upd:refresh", tr("重新探测内核"), false},
+			{"core:refresh", tr("重新探测内核"), false},
 		}
 		widths := make([]float64, len(specs))
 		total := 0.0
@@ -61,7 +61,7 @@ func (u *natUI) paintLogActions(c *walk.Canvas, x, y, w float64) {
 		bx := x + w - 16 - total - 8*float64(len(specs)-1)
 		for i, s := range specs {
 			enabled := true
-			if s.id == "upd:refresh" {
+			if s.id == "core:refresh" {
 				enabled = !u.m.coreBusy
 			}
 			u.button(c, bx, y, widths[i], btnH, s.id, s.label, s.primary, enabled)

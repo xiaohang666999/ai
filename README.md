@@ -26,7 +26,7 @@ a fresh WARP device for that machine.
 | System-proxy mode (default)         | ✅ WinINET registry + `InternetSetOption` notify |
 | TUN global mode (optional)          | ✅ mihomo `tun:` block (needs admin; wintun is embedded) |
 | Native GUI (double-click portable)    | ✅ sidebar shell — Home/Settings/About/Logs, light+dark theme, 中文/English |
-| Licence notice + remote control       | ✅ About-page notice; per-install control code checked against a stop list |
+| Licence notice                        | ✅ About-page footer (no startup popup) |
 | Portable ZIP, core separated        | ✅ `pack.ps1` → v2rayN-style layout |
 | Core one-click download/update      | ✅ GitHub releases auto-provision |
 
@@ -68,7 +68,7 @@ delete the folder and everything is gone.
 
 The GUI never embeds mihomo; it manages `core\mihomo.exe` as a plain file:
 
-- **One click**: dashboard → 「更新核心」 downloads the latest
+- **One click**: About page → 「检查/下载内核」 downloads the latest
   `mihomo-windows-amd64` release.
 - **Manual**: drop any mihomo build into `core\mihomo.exe` — no rebuild, no
   version lock. `xehn.exe` also accepts `-core PATH` to point elsewhere.
@@ -88,7 +88,7 @@ appearance switches (theme, language) so neither needs a trip to settings:
 |---|---|
 | **Home** | connect/disconnect circle with the session clock, current exit (flag, colo, latency, up/down), protocol selector with live core-capability state, selected node detail + live throughput chart |
 | **Settings** | one page, four cards: capture (system proxy or VPN/TUN, local proxy port, LAN access, API port, address family with protocol gating, MTU), routing (proxy mode, default node, split tunnelling, domain lists, geo split), startup/behaviour (autostart, auto-connect, rescan, auto-repair, remember page, timeout), DNS & exit (presets, no-DNS, Psiphon + region) |
-| **About** | versions, data/core paths, licences, client and core updates |
+| **About** | versions, data/core paths, licences, upstream project links |
 | **Logs** | run log (level-tagged console), connection history (the connect pipeline's own steps), diagnostics (copyable) |
 
 Theme: **light (default)**, dark, or follow the system — switched live, title
@@ -118,9 +118,9 @@ timeout) and DNS & exit:
 
 ![Logs](docs/screenshots/04-logs.png)
 
-The About page follows the same grid — this build, its licences, updates, the
-remote-control code, and one card of GitHub links — and is described in
-[Licence notice and remote control](#licence-notice-and-remote-control) below.
+The About page follows the same grid — this build, its licences, the core, and
+one card of upstream GitHub links — and is described in
+[Licence notice](#licence-notice) below.
 
 The same window in English (the language pill lives in the Home header, so it
 never needs a trip to settings):
@@ -139,7 +139,7 @@ cannot start.
 The GUI runs the exact same code path as the CLI
 (`defaultConnectOptions` → `runConnectCmd`), so behaviour cannot drift.
 
-### Licence notice and remote control
+### Licence notice
 
 No popup opens at launch: the licence sentence
 — **本软件开源免费，仅供学习交流使用，禁止售卖！** — sits at the foot of the
@@ -147,41 +147,12 @@ About page instead, next to the disclaimer, so it is always there without
 standing between the user and the window. That page also points at nothing
 local: every row of its link card opens an **upstream open-source project** —
 the mihomo core, AmneziaWG, `lxn/walk`, `warpscout` and Psiphon — because a
-path on this disk is useless to anyone reading the page on another machine. This project's
-own address is deliberately not baked in: a deployment that wants update checks
-or a remote stop list sets them itself (see below).
+path on this disk is useless to anyone reading the page on another machine.
 
-Each install also carries a **control code** (`XXXX-XXXX-XXXX-XXXX`, shown and
-copyable on About), derived from the machine's Windows identity — so deleting
-`settings.json` does not mint a fresh one. The stop list is **not** baked in:
-`controlListURL` in `control.go` ships empty, and a build that leaves it empty
-simply never polls. Point it at your own copy of `control.json` to enable the
-channel; the client then reads it at startup and every 15 minutes:
-
-```json
-{
-  "stop_all": false,
-  "stopped_codes": ["ABCD-EFGH-JKMN-PQRS"],
-  "message": ""
-}
-```
-
-A listed code — or `stop_all` — stops that client: it refuses to connect, tears
-down a session that is already up, and says why on screen. `message` replaces
-the default sentence. The check is deliberately **fail-open**: an unreachable
-list keeps the previous verdict, so an offline laptop or a blocked GitHub never
-bricks a legitimate install, while the verdict is cached in `control-state.json`
-so a restart cannot quietly put a stopped client back into service.
-
-### Updating
-
-The About page checks the release feed configured in `version.go`
-(`ghLatestURL`, empty by default so a stock build never calls out to anyone's
-repository); when a newer release exists its button becomes **Update to vX**.
-One click downloads the portable ZIP, checks that the program inside is a real
-PE image of plausible size, swaps it in place and restarts. The running image is renamed aside rather than overwritten — Windows
-forbids the latter — so a failed swap rolls back and leaves the current build
-working; the backup is cleared on the next start.
+The program has **no self-update channel and no remote kill switch**. There is
+nothing to configure and nothing to disable: updating means replacing
+`xehn.exe` (and, if you like, `core\mihomo.exe`) from the package you
+downloaded, exactly like any other portable app.
 
 ### Tray
 
@@ -218,8 +189,6 @@ xehn (package main)            the warpscout engine (verbatim) +
 ├── gui_dialogs_windows.go ★         modal input/confirm, autostart, prefs plumbing
 ├── gui_native_stub.go ★             non-Windows no-op (native window = disabled)
 ├── settings.go        ★             settings.json model, load/save, normalisation
-├── control.go         ★             per-install control code + remote stop list
-├── control.json       ★             the published stop list the client reads
 │
 ├── internal/cache     ★             TTL cache store (account + scan results)
 └── internal/core      ★             mihomo sidecar manager + system proxy

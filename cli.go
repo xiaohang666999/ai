@@ -257,11 +257,6 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// "version" must stay a bare string: install.sh compares its whole output.
-	if cmd.name != "version" {
-		noticeUpdate(ctx)
-	}
-
 	if err := cmd.run(ctx, opts); err != nil {
 		fmt.Fprintln(os.Stderr, errPal.fail(err.Error()))
 		os.Exit(1)

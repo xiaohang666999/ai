@@ -616,12 +616,12 @@ func aboutLinks() []aboutLink {
 // card's value column, and "github.com/…" still reads as a link.
 func shortURL(u string) string { return strings.TrimPrefix(u, "https://") }
 
-// The About page is a single-column stack: one card per row, then the link card,
-// then a two-line footer. The page does not scroll, so every row is sized from
-// these constants and aboutLayout is asserted to end above the body box.
+// The About page is a single-column stack: three cards, then the link card, then
+// a two-line footer. The page does not scroll, so every row is sized from these
+// constants and aboutLayout is asserted to end above the body box.
 //
 // One card per row is what the page needed: at two columns each card was ~420
-// wide, which forced the action buttons to share the bottom edge and made four
+// wide, which forced the action buttons to share the bottom edge and made the
 // blocks of colour compete. Full width lets the fields sit in two columns with
 // the actions on the title line.
 const (
@@ -641,12 +641,11 @@ const (
 
 // aboutLayout returns the top of each card, of the link card and of the footer,
 // in design units, for the body's own top edge.
-func aboutLayout(bodyY float64) (card1, card2, card3, card4, links, footer float64) {
+func aboutLayout(bodyY float64) (card1, card2, card3, links, footer float64) {
 	card1 = bodyY
 	card2 = card1 + aboutCardH + aboutGap
 	card3 = card2 + aboutCardH + aboutGap
-	card4 = card3 + aboutCardH + aboutGap
-	links = card4 + aboutCardH + aboutGap
+	links = card3 + aboutCardH + aboutGap
 	footer = links + aboutLinkH + aboutFootG
 	return
 }
@@ -719,7 +718,7 @@ func (u *natUI) aboutStrip(c *walk.Canvas, x, y, w float64, title string, fields
 }
 
 func (u *natUI) paintAbout(c *walk.Canvas, x, y, w float64) {
-	card1, card2, card3, card4, links, footer := aboutLayout(y)
+	card1, card2, card3, links, footer := aboutLayout(y)
 
 	u.aboutStrip(c, x, card1, w, tr("本程序"), [][2]string{
 		{tr("名称"), productName},
@@ -736,37 +735,9 @@ func (u *natUI) paintAbout(c *walk.Canvas, x, y, w float64) {
 		{tr("协议引擎"), "WireGuard / AmneziaWG / MASQUE"},
 		{tr("内核来源"), shortURL(coreRepoURL + "/releases")},
 	},
-		aboutAct{"upd:refresh", tr("重新探测内核"), false, !u.m.coreBusy},
-		aboutAct{"upd:core", tr("检查/下载内核"), true, !u.m.coreBusy},
+		aboutAct{"core:refresh", tr("重新探测内核"), false, !u.m.coreBusy},
+		aboutAct{"core:download", tr("检查/下载内核"), true, !u.m.coreBusy},
 	)
-
-	updID, updLabel := "upd:check", tr("检查更新")
-	if u.m.updAvail != "" {
-		updID, updLabel = "upd:install", trf("立即更新到 v%s", u.m.updAvail)
-	}
-	u.aboutStrip(c, x, card3, w, tr("客户端更新"), [][2]string{
-		{tr("当前版本"), versionWithBuild()},
-		{tr("最新版本"), orEmpty(u.m.updLatest, tr("尚未检查"))},
-		{tr("状态"), orEmpty(u.m.updNote, tr("点击右侧按钮检查更新"))},
-	},
-		aboutAct{updID, updLabel, true, !u.m.updBusy},
-	)
-
-	stText, stColor := u.controlStatus()
-	u.aboutStrip(c, x, card4, w, tr("远程控制"), [][2]string{
-		{tr("控制码"), orEmpty(u.m.set.ControlCode, tr("未知"))},
-		{tr("最近检查"), controlCheckedText(u.m.control)},
-	},
-		aboutAct{"about:copycode", tr("复制控制码"), false, true},
-		aboutAct{"about:checkcontrol", tr("立即检查"), true, !u.m.controlBusy},
-	)
-	// The verdict has its own colour (green / amber / red), so it is painted by
-	// hand into the second field row's left cell instead of going through the
-	// neutral strip text.
-	colW := (w - 32 - aboutFieldGap) / 2
-	stY := card4 + 34 + aboutKVStep
-	u.txt(c, x+16, stY, aboutFieldCol, 20, tr("状态"), u.f.f9, th.dim)
-	u.txt(c, x+16+aboutFieldCol, stY, colW-aboutFieldCol, 20, stText, u.f.f9, stColor)
 
 	// The link card: one address per row, full width, the whole row clickable.
 	u.cardPlain(c, x, links, w, aboutLinkH)
@@ -795,28 +766,3 @@ func (u *natUI) paintAbout(c *walk.Canvas, x, y, w float64) {
 		u.f.f8, th.dim)
 }
 
-// controlStatus is the About card's verdict line: stopped outranks everything,
-// then "checked and fine", then "never reached the list".
-func (u *natUI) controlStatus() (string, walk.Color) {
-	switch {
-	case u.m.control.Stopped:
-		return tr("已停用"), th.warn
-	case u.m.control.Reached:
-		return tr("正常"), th.ok
-	default:
-		return tr("未检查"), th.dim
-	}
-}
-
-// controlCheckedText renders the last check as a compact timestamp, and says so
-// when that check never got an answer.
-func controlCheckedText(st controlState) string {
-	if st.CheckedAt.IsZero() {
-		return tr("尚未检查")
-	}
-	s := st.CheckedAt.Format("01-02 15:04")
-	if !st.Reached {
-		s += " · " + tr("未连上")
-	}
-	return s
-}
