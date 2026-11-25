@@ -785,8 +785,8 @@ func (u *natUI) paintAbout(c *walk.Canvas, x, y, w float64) {
 		u.addSpot(ln.id, r, true)
 	}
 
-	// Footer: the same sentence the startup notice opens with, kept on the page
-	// so it is still there after the notice has been dismissed.
+	// Footer: the licence sentence and the disclaimer live on the page itself —
+	// this is now the only place a launch shows them.
 	yf := footer
 	u.hline(c, x, yf-7, w, th.line2)
 	u.txt(c, x+2, yf, w-4, 18, tr("本软件开源免费，仅供学习交流使用，禁止售卖！"), u.f.f10, th.text)

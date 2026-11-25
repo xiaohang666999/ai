@@ -593,9 +593,9 @@ func runNativeGUI(ctx context.Context, _ options) error {
 	u.setWindowIcon()
 	u.invalidate()
 
-	// The licence reminder comes first: it is a condition of using this build,
-	// and it must not be buried under an auto-connect pipeline or a scan.
-	u.showStartupNotice()
+	// No startup popup: the licence and disclaimer sentences live on the About
+	// page instead, so a launch goes straight to the window. A remote stop is
+	// still announced, because that one blocks connecting.
 	if u.m.control.Stopped {
 		u.controlStoppedDialog()
 	}

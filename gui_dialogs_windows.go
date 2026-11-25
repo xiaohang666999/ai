@@ -352,18 +352,6 @@ func (u *natUI) infoDialog(title, headline string, lines []string) {
 	dlg.Run()
 }
 
-// showStartupNotice is the licence reminder every launch opens with: the
-// project is free and open source, and selling it is not allowed.
-func (u *natUI) showStartupNotice() {
-	u.infoDialog(tr("使用须知"), tr("本软件开源免费，仅供学习交流使用，禁止售卖！"), []string{
-		tr("本程序只在你自己的设备上配置一条加密隧道，"),
-		tr("不提供、不代理任何服务器资源，请遵守当地法律法规。"),
-		"",
-		tr("如果你是通过付费渠道拿到本软件的，说明你被骗了；"),
-		tr("本软件完全免费，可从任何正规渠道获取，无需付费。"),
-	})
-}
-
 // controlStoppedDialog explains a remote stop: what happened, which code this
 // install reports, and where to ask about it.
 func (u *natUI) controlStoppedDialog() {

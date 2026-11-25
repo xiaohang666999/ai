@@ -26,7 +26,7 @@ a fresh WARP device for that machine.
 | System-proxy mode (default)         | ✅ WinINET registry + `InternetSetOption` notify |
 | TUN global mode (optional)          | ✅ mihomo `tun:` block (needs admin; wintun is embedded) |
 | Native GUI (double-click portable)    | ✅ sidebar shell — Home/Settings/About/Logs, light+dark theme, 中文/English |
-| Licence notice + remote control       | ✅ startup notice; per-install control code checked against `control.json` |
+| Licence notice + remote control       | ✅ About-page notice; per-install control code checked against a stop list |
 | Portable ZIP, core separated        | ✅ `pack.ps1` → v2rayN-style layout |
 | Core one-click download/update      | ✅ GitHub releases auto-provision |
 
@@ -141,13 +141,13 @@ The GUI runs the exact same code path as the CLI
 
 ### Licence notice and remote control
 
-Every launch opens with the licence reminder this project asks its builds to
-carry — **本软件开源免费，仅供学习交流使用，禁止售卖！** — and the same
-sentence stays at the foot of the About page, so it is still there after the
-notice has been dismissed. The About page itself points at nothing local: every
-row of its link card opens an **upstream open-source project** — the mihomo
-core, AmneziaWG, `lxn/walk`, `warpscout` and Psiphon — because a path on this
-disk is useless to anyone reading the page on another machine. This project's
+No popup opens at launch: the licence sentence
+— **本软件开源免费，仅供学习交流使用，禁止售卖！** — sits at the foot of the
+About page instead, next to the disclaimer, so it is always there without
+standing between the user and the window. That page also points at nothing
+local: every row of its link card opens an **upstream open-source project** —
+the mihomo core, AmneziaWG, `lxn/walk`, `warpscout` and Psiphon — because a
+path on this disk is useless to anyone reading the page on another machine. This project's
 own address is deliberately not baked in: a deployment that wants update checks
 or a remote stop list sets them itself (see below).
 
