@@ -15,15 +15,18 @@ func TestDefaultClientSize(t *testing.T) {
 		{"96dpi", 96, 1920, 1040, 16, 16, 1280, 860},
 		// 150%: width hits the preferred 1920, height is capped at 85%.
 		{"144dpi", 144, 2560, 1504, 24, 24, 1920, 1258},
-		// 200% on a big screen: both axes capped by the work area, independently.
-		{"192dpi-capped", 192, 2560, 1504, 24, 24, 2029, 1258},
-		// 200% on 1080p: the 80%/85% caps fall below the logical floor, so the
-		// floor wins and the window opens at 880x560 logical.
+		// 200% on a big screen: width is capped by the work area; height is
+		// lifted to the 664 logical floor (1328 physical), which now sits above
+		// the 85% cap so the page area keeps its minimum plus the dock.
+		{"192dpi-capped", 192, 2560, 1504, 24, 24, 2029, 1328},
+		// 200% on 1080p: the 80%/85% caps fall below the logical floor, and the
+		// floor itself is capped by the work area, which wins on both axes.
 		{"192dpi-1080p", 192, 1920, 1080, 24, 24, 1760, 1056},
-		// Small laptop: width is lifted to the 880 logical floor.
-		{"96dpi-small", 96, 1024, 768, 16, 16, 880, 639},
+		// Small laptop: width is lifted to the 880 logical floor, height to the
+		// 664 floor (560 page minimum + the always-visible log dock).
+		{"96dpi-small", 96, 1024, 768, 16, 16, 880, 664},
 		// Tiny screen: the floor gives way to the physical work area.
-		{"96dpi-tiny", 96, 800, 600, 16, 16, 784, 560},
+		{"96dpi-tiny", 96, 800, 600, 16, 16, 784, 584},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

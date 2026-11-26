@@ -17,8 +17,8 @@ import (
 // stays put and the content is clipped to the body rectangle.
 const (
 	setCardGap  = 14.0
-	setConnBase = 252.0 // LAN sharing off: no credential rows at all
-	setConnLan  = 376.0 // sharing on: + two credential rows and the hint line
+	setConnBase = 304.0 // LAN sharing off: no credential rows at all
+	setConnLan  = 428.0 // sharing on: + two credential rows and the hint line
 	setRoutingH = 300.0
 	setExitH    = 392.0
 )
@@ -225,9 +225,21 @@ func (u *natUI) paintSetConnection(c *walk.Canvas, x, y, w float64) {
 		}
 		u.txt(c, x+16, cy+246, w-32, 16, lanAuthHint(s), u.f.f8, hintCol)
 		u.familyRow(c, x, cy+276, w)
+		u.speedTestRow(c, x, cy+328, w)
 		return
 	}
 	u.familyRow(c, x, cy+158, w)
+	u.speedTestRow(c, x, cy+210, w)
+}
+
+// speedTestRow is the connect-time speed gate switch. The gate runs on every
+// connect path (WARP/MASQUE downlink floor, OpenVPN relay floor, Psiphon
+// slow-server re-draw), so it lives on the connection card rather than inside
+// either exit's section. Off keeps any working node whatever its measured
+// speed; the next connect picks the change up.
+func (u *natUI) speedTestRow(c *walk.Canvas, x, y, w float64) {
+	u.rowToggle(c, x, y, w, "set:speedtest", tr("连接后自动测速"),
+		tr("实测速度过低时自动更换节点，关闭后保留任何可用节点"), u.m.set.SpeedTest, true)
 }
 
 // captureRow is the capture-mode dropdown: system proxy or TUN device.
@@ -718,7 +730,10 @@ func (u *natUI) aboutStrip(c *walk.Canvas, x, y, w float64, title string, fields
 }
 
 func (u *natUI) paintAbout(c *walk.Canvas, x, y, w float64) {
-	card1, card2, card3, links, footer := aboutLayout(y)
+	// The third card slot is reserved by aboutLayout (and pinned by its test)
+	// but carries no strip yet; discard it instead of leaving an unused
+	// variable that fails the Windows build.
+	card1, card2, _, links, footer := aboutLayout(y)
 
 	u.aboutStrip(c, x, card1, w, tr("本程序"), [][2]string{
 		{tr("名称"), productName},
@@ -765,4 +780,3 @@ func (u *natUI) paintAbout(c *walk.Canvas, x, y, w float64) {
 		tr("本程序只在你自己的设备上配置一条加密隧道，不提供、不代理任何服务器资源；程序按「现状」提供，不对可用性、速度或适用性作任何承诺。"),
 		u.f.f8, th.dim)
 }
-
