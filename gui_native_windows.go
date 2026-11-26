@@ -263,11 +263,10 @@ type natUI struct {
 	k  float64
 
 	// The layout is adaptive: k is the display's DPI factor (times a shrink
-	// factor on short windows), ox/oy stay zero, and dw/dh are the logical
-	// page area the breakpoints lay out against. dh excludes the caption band
-	// AND the bottom log dock, so a page's bottom edge is always above the
-	// dock. winW is the DPI-only logical width (no page shrink), so the
-	// sidebar breakpoint does not drift when a short page is scaled down.
+	// factor on short non-home pages), ox/oy stay zero, and dw/dh are the
+	// logical client width/height the breakpoints lay out against. dh excludes
+	// the caption band. winW is the DPI-only logical width (no page shrink), so
+	// the sidebar breakpoint does not drift when a short page is scaled down.
 	ox, oy int
 	dw, dh float64
 	winW   float64
@@ -2706,40 +2705,6 @@ func (u *natUI) onWheel(x, y int, b walk.MouseButton) {
 // log at sixteen repaints a second.
 var paintPanics int
 
-// pageGrid resolves the adaptive fit for one frame. k starts as the display
-// DPI alone, so a logical pixel is a physical pixel at 100% and twice that at
-// 200%; nothing letterboxes. Every page is authored on a fixed 700-tall grid:
-// when the client is too short for that grid PLUS the caption band and the log
-// dock, the whole grid shrinks to fit instead of clipping. The factor stays in
-// k after paint, so hit-testing matches the frame the user sees, and Home
-// shares it so its sidebar, type and content stay the same size as the other
-// pages at the same window size.
-//
-// dh is the PAGE AREA height — caption and dock excluded — so every page's
-// bottom-edge math (and the sidebar foot) lands above the dock, and the dock
-// owns the strip below it on every page.
-func pageGrid(pxW, pxH int, dpi float64) (k, dw, dh float64) {
-	if dpi <= 0 {
-		dpi = 96
-	}
-	k = dpi / 96.0
-	dh = float64(pxH)/k - capH
-	// rem is what the page grid gets after the dock takes its strip. The floor
-	// keeps k positive through transient tiny client rectangles during
-	// resize/DPI transitions.
-	rem := dh - logDockH
-	if rem < 700 {
-		if rem < 100 {
-			rem = 100
-		}
-		k *= rem / 700
-		dh = float64(pxH)/k - capH
-	}
-	dw = float64(pxW) / k
-	dh -= logDockH
-	return
-}
-
 func (u *natUI) paint(c *walk.Canvas, _ walk.Rectangle) (err error) {
 	// Hit regions are rebuilt every frame. Publishing a half-built map was
 	// fatal: the old code cleared u.sp first, so any panic or early return left
@@ -2769,27 +2734,38 @@ func (u *natUI) paint(c *walk.Canvas, _ walk.Rectangle) (err error) {
 	if pxW < 10 {
 		pxW = 1080
 	}
-	// The design grid is 1080 wide and (700 + caption + log dock) tall; the
-	// display scales it, and every widget converts through u.r/u.s.
+	// The design grid is 1080 wide and (700 + caption) tall; the display scales
+	// it, and every widget converts through u.r/u.s.
 	pxH := b.Height
 	if pxH < 10 {
-		pxH = 700 + capH + logDockH
+		pxH = 700 + capH
 	}
-	// Adaptive engine: k is the display DPI times the short-window shrink,
-	// dw/dh are the logical page area the breakpoints lay out against, and
-	// winW is the DPI-only width (no shrink) so the sidebar breakpoint does
-	// not drift when a short window scales the grid down.
+	// Adaptive engine: k is the display DPI alone, so a logical pixel is a
+	// physical pixel at 100% and twice that at 200%. dw/dh are the logical
+	// client size the breakpoints lay out against; nothing letterboxes.
 	dpi := c.DPI()
-	u.k, u.dw, u.dh = pageGrid(pxW, pxH, float64(dpi))
+	if dpi <= 0 {
+		dpi = 96
+	}
+	u.k = float64(dpi) / 96.0
 	u.ox = 0
 	u.oy = 0
 	// The page-transition offset is transient: clear it before the wallpaper and
 	// sidebar paint so only paintShell's page body ever moves.
 	u.ax, u.ay = 0, 0
-	if dpi <= 0 {
-		dpi = 96
+	u.winW = float64(pxW) / u.k
+	u.dw = u.winW
+	u.dh = float64(pxH)/u.k - capH
+	// Every page is authored on a fixed 700-tall grid. When the window is
+	// shorter than that, shrink the whole page to fit instead of clipping.
+	// The factor stays in u.k after paint, so hit-testing matches the frame the
+	// user sees. Home shares the same factor: its sidebar, type and content
+	// must stay the same size as the other pages at the same window size.
+	if u.dh < 700 {
+		u.k *= u.dh / 700
+		u.dw = float64(pxW) / u.k
+		u.dh = float64(pxH)/u.k - capH
 	}
-	u.winW = float64(pxW) / (float64(dpi) / 96.0)
 	// Type follows the window, not the display: k already carries the DPI, so
 	// dividing it out leaves the pure zoom the font ramp must follow.
 	u.scaleFonts(u.k * 96.0 / float64(dpi))

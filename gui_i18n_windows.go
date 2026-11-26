@@ -272,10 +272,6 @@ var enStrings = map[string]string{
 	// Settings.
 	"开机自动启动":     "Launch at login",
 	"启动后自动连接":    "Connect on launch",
-	"连接后自动测速":    "Speed test after connect",
-	"实测速度过低时自动更换节点，关闭后保留任何可用节点": "Rotates past nodes measured too slow; off keeps any working node",
-	"连接后自动测速已开启：速度过低的节点会被自动跳过":  "Speed test on: nodes measured too slow are skipped automatically",
-	"连接后自动测速已关闭：不再因速度过慢更换节点":    "Speed test off: nodes are no longer rotated out for being slow",
 	"模式":             "Mode",
 	"设置已保存":         "Saved",
 	"TUN 模式需要管理员权限": "TUN mode needs administrator rights",
