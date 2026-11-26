@@ -19,9 +19,25 @@ const (
 	shellPadX  = 26.0
 	shellHeadH = 74.0
 
+	// shellBottomPad is the gap between the last card and the window's foot.
+	shellBottomPad = 14.0
+
 	shellBodyY = shellHeadH + 10
-	shellBodyH = 700 - shellBodyY - 14
+	// shellBodyH is the body's height on the 700-tall design grid. Every page
+	// now ends above the log dock, so the live body is bodyH(); this constant is
+	// only the grid's reference size.
+	shellBodyH = 700 - shellBodyY - shellBottomPad - logBoxH - logBoxGap
 )
+
+// bodyBottom is the design-grid y where every page's body must end: the log
+// dock sits at the foot of the content column on every page, so the pages stop
+// above it instead of running underneath.
+func (u *natUI) bodyBottom() float64 {
+	return u.dh - shellBottomPad - logBoxH - logBoxGap
+}
+
+// bodyH is the live body height, from shellBodyY down to bodyBottom().
+func (u *natUI) bodyH() float64 { return u.bodyBottom() - shellBodyY }
 
 // sidebarW is the sidebar width for the current window. It reads winW (the
 // DPI-only logical width) rather than dw, so a short non-home page that is
@@ -87,6 +103,9 @@ func (u *natUI) paintShell(c *walk.Canvas) {
 		u.paintHome(c)
 	}
 	u.ay = 0
+	// The log dock is pinned under every page, so it paints after the page
+	// transition has finished and never moves with it.
+	u.paintLogDock(c)
 	// Open dropdown overlays next, so they sit above the page (and hit-testing
 	// scans spots back to front), and the window buttons above everything.
 	u.paintDropdownPopups(c)
@@ -280,9 +299,12 @@ func (u *natUI) paintSidebar(c *walk.Canvas) {
 		u.addSpot("nav:"+n.page, r, true)
 	}
 
-	// Foot: the running core version, pinned to the bottom of the rail.
+	// Foot: the running core version, pinned to the bottom of the rail. u.txt
+	// adds the caption band to every y, so the design y is taken relative to
+	// the body (fullH - capH); without that the line sat past the window's
+	// bottom edge and was cut off.
 	fullH := u.dh + capH
-	footY := fullH - 40
+	footY := fullH - capH - 40
 	u.hline(c, 14, footY-12, sw-28, th.line2)
 	core := "mihomo " + orEmpty(u.m.coreVersion, tr("未探测"))
 	u.txt(c, 22, footY, sw-44, 18, core, u.f.f8, th.faint)

@@ -26,6 +26,10 @@ func (u *natUI) actionPages(id string) {
 	case strings.HasPrefix(id, "go:"):
 		u.gotoPage(strings.TrimPrefix(id, "go:"))
 
+	case id == "log:dock":
+		// The dock is a summary of the run log: a click opens the full one.
+		u.gotoPage(pageLogs)
+
 	case id == "theme:cycle":
 		u.cycleTheme()
 	case strings.HasPrefix(id, "theme:"):

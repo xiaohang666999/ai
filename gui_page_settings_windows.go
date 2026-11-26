@@ -49,7 +49,7 @@ func (u *natUI) settingsTops() (conn, routing, exit float64) {
 // clampSetScroll keeps the scroll offset inside the content and records the
 // maximum so the wheel and the scrollbar agree on the same range.
 func (u *natUI) clampSetScroll() {
-	max := int(u.settingsContentH() - shellBodyH + 0.5)
+	max := int(u.settingsContentH() - u.bodyH() + 0.5)
 	if max < 0 {
 		max = 0
 	}
@@ -65,7 +65,7 @@ func (u *natUI) clampSetScroll() {
 func (u *natUI) paintSettings(c *walk.Canvas) {
 	u.clampSetScroll()
 	x, w := u.contentX(), u.contentW()
-	clip := u.r(u.contentX(), shellBodyY, u.contentW(), shellBodyH)
+	clip := u.r(u.contentX(), shellBodyY, u.contentW(), u.bodyH())
 	start := len(u.sp)
 	u.clipCanvas(c, clip, func() {
 		conn, routing, exit := u.settingsTops()
@@ -82,12 +82,12 @@ func (u *natUI) paintSettings(c *walk.Canvas) {
 // it, so the handle can never drift away from where it is drawn.
 func (u *natUI) scrollbarGeom() (trackTop, trackH, thumbTop, thumbH float64) {
 	trackTop = shellBodyY + 2
-	trackH = shellBodyH - 4
+	trackH = u.bodyH() - 4
 	if u.m.setScrollMax <= 0 {
 		return trackTop, trackH, 0, 0
 	}
-	total := shellBodyH + float64(u.m.setScrollMax)
-	thumbH = trackH * shellBodyH / total
+	total := u.bodyH() + float64(u.m.setScrollMax)
+	thumbH = trackH * u.bodyH() / total
 	if thumbH < 42 {
 		thumbH = 42
 	}
@@ -718,7 +718,7 @@ func (u *natUI) aboutStrip(c *walk.Canvas, x, y, w float64, title string, fields
 }
 
 func (u *natUI) paintAbout(c *walk.Canvas, x, y, w float64) {
-	card1, card2, card3, links, footer := aboutLayout(y)
+	card1, card2, _, links, footer := aboutLayout(y)
 
 	u.aboutStrip(c, x, card1, w, tr("本程序"), [][2]string{
 		{tr("名称"), productName},

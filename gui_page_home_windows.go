@@ -166,7 +166,7 @@ func (u *natUI) homeLayout() homeGeo {
 	if g.compactH {
 		g.trafficY = infoBottom + 14
 	}
-	g.trafficH = u.dh - 14 - g.trafficY
+	g.trafficH = u.bodyBottom() - g.trafficY
 	if g.trafficH < 120 {
 		g.trafficH = 120
 	}
