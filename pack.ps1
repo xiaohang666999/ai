@@ -37,7 +37,7 @@ $buildDir = Join-Path $dist 'build'
 $bin = Join-Path $buildDir 'vegsh.exe'
 $root = Join-Path $dist 'VEGSH'
 $stamp = Get-Date -Format 'yyyyMMddHHmmss'
-if (-not $Version) { $Version = "0.3.0-$stamp" }
+if (-not $Version) { $Version = "1.0.261126" }
 
 New-Item -ItemType Directory -Force -Path $buildDir | Out-Null
 
