@@ -325,6 +325,16 @@ type natUI struct {
 	logDrag   bool
 	logGrabDY float64
 
+	// pageDrag tracks touch-style click-and-drag scrolling on scrollable pages.
+	pageDragPending bool
+	pageDragActive  bool
+	pageDragStartX  int
+	pageDragStartY  int
+	pageDragLastY   int
+	pageDragAccum   float64
+	pageDragSpot    spot
+	pageDragHasSpot bool
+
 	// pageAnimAt stamps a page switch so paintShell can slide/fade the new page
 	// in; spinLoop keeps repainting until the transition window closes.
 	pageAnimAt time.Time
@@ -508,7 +518,8 @@ func runNativeGUI(ctx context.Context, _ options) error {
 		cw.Invalidate()
 	})
 
-	cw.MouseDown().Attach(func(x, y int, _ walk.MouseButton) { u.onDown(x, y) })
+	cw.MouseDown().Attach(func(x, y int, b walk.MouseButton) { u.onDown(x, y, b) })
+	cw.MouseUp().Attach(func(x, y int, b walk.MouseButton) { u.onUp(x, y, b) })
 	cw.MouseMove().Attach(func(x, y int, b walk.MouseButton) { u.onMove(x, y, b) })
 	cw.MouseWheel().Attach(func(x, y int, b walk.MouseButton) { u.onWheel(x, y, b) })
 
@@ -2433,8 +2444,11 @@ func (u *natUI) hit(x, y int) (spot, bool) {
 	return spot{}, false
 }
 
-func (u *natUI) onDown(x, y int) {
+func (u *natUI) onDown(x, y int, b walk.MouseButton) {
 	u.clickDebug(x, y)
+	if b != walk.LeftButton {
+		return
+	}
 	// The caption band belongs to the window, not to a page: the three buttons
 	// act immediately, and empty space there moves the window.
 	if u.inCaption(x, y) {
@@ -2458,7 +2472,8 @@ func (u *natUI) onDown(x, y int) {
 		u.invalidate()
 		return
 	}
-	if s, ok := u.hit(x, y); ok && s.enabled {
+	s, ok := u.hit(x, y)
+	if ok && s.enabled {
 		if s.id == "set:scrollbar" {
 			u.beginScrollDrag(y)
 			return
@@ -2467,7 +2482,45 @@ func (u *natUI) onDown(x, y int) {
 			u.beginLogDrag(y)
 			return
 		}
+	}
+	if y >= u.sy(shellBodyY) && u.canPageDrag() {
+		u.pageDragPending = true
+		u.pageDragActive = false
+		u.pageDragStartX = x
+		u.pageDragStartY = y
+		u.pageDragLastY = y
+		u.pageDragAccum = 0
+		u.pageDragSpot = s
+		u.pageDragHasSpot = ok
+		return
+	}
+	if ok && s.enabled {
 		u.action(s.id)
+	}
+}
+
+func (u *natUI) onUp(x, y int, b walk.MouseButton) {
+	if b != walk.LeftButton {
+		return
+	}
+	if u.logDrag {
+		u.logDrag = false
+		return
+	}
+	if u.scrollDrag {
+		u.scrollDrag = false
+		return
+	}
+	if u.pageDragActive {
+		u.pageDragActive = false
+		u.pageDragPending = false
+		return
+	}
+	if u.pageDragPending {
+		u.pageDragPending = false
+		if u.pageDragHasSpot && u.pageDragSpot.enabled {
+			u.action(u.pageDragSpot.id)
+		}
 	}
 }
 
@@ -2561,6 +2614,36 @@ func (u *natUI) onMove(x, y int, b walk.MouseButton) {
 			return
 		}
 	}
+	if u.pageDragPending || u.pageDragActive {
+		if b == 0 {
+			u.pageDragPending = false
+			u.pageDragActive = false
+		} else {
+			if u.pageDragPending {
+				dx := x - u.pageDragStartX
+				dy := y - u.pageDragStartY
+				thresh := u.s(6)
+				if thresh < 4 {
+					thresh = 4
+				}
+				if dx*dx+dy*dy >= thresh*thresh {
+					u.pageDragPending = false
+					u.pageDragActive = true
+					u.pageDragLastY = y
+					u.m.hover = ""
+				}
+			}
+			if u.pageDragActive {
+				dy := y - u.pageDragLastY
+				u.pageDragLastY = y
+				if dy != 0 {
+					u.dragPageBy(dy)
+					u.invalidate()
+				}
+				return
+			}
+		}
+	}
 	if s, ok := u.hit(x, y); ok {
 		if u.m.hover != s.id {
 			u.m.hover = s.id
@@ -2571,6 +2654,90 @@ func (u *natUI) onMove(x, y int, b walk.MouseButton) {
 	if u.m.hover != "" {
 		u.m.hover = ""
 		u.invalidate()
+	}
+}
+
+func (u *natUI) canPageDrag() bool {
+	if u.m.page == pageSettings {
+		return u.m.setScrollMax > 0
+	}
+	if u.m.page == pageLogs && u.m.logTab == "run" {
+		rows := u.m.logVisibleRows
+		if rows < 1 {
+			rows = 1
+		}
+		return len(u.m.logs) > rows
+	}
+	if u.m.page == pageNodes {
+		return u.m.subVisibleRows > 0 && u.m.subMaxScroll > 0
+	}
+	return false
+}
+
+func (u *natUI) dragPageBy(dy int) {
+	if u.m.page == pageSettings {
+		k := u.k
+		if k <= 0 {
+			k = 1
+		}
+		delta := float64(dy) / k
+		var step int
+		if delta >= 0 {
+			step = int(delta + 0.5)
+		} else {
+			step = int(delta - 0.5)
+		}
+		u.m.setScroll -= step
+		u.clampSetScroll()
+		return
+	}
+	if u.m.page == pageLogs && u.m.logTab == "run" {
+		rows := u.m.logVisibleRows
+		if rows < 1 {
+			rows = 1
+		}
+		max := len(u.m.logs) - rows
+		if max < 0 {
+			max = 0
+		}
+		step := float64(u.s(18))
+		if step < 1 {
+			step = 1
+		}
+		u.pageDragAccum += float64(dy)
+		moved := int(u.pageDragAccum / step)
+		if moved != 0 {
+			u.pageDragAccum -= float64(moved) * step
+			u.m.logScroll += moved
+			if u.m.logScroll < 0 {
+				u.m.logScroll = 0
+			}
+			if u.m.logScroll > max {
+				u.m.logScroll = max
+			}
+		}
+		return
+	}
+	if u.m.page == pageNodes {
+		if u.m.subVisibleRows == 0 {
+			return
+		}
+		step := float64(u.s(36))
+		if step < 1 {
+			step = 1
+		}
+		u.pageDragAccum += float64(dy)
+		moved := int(u.pageDragAccum / step)
+		if moved != 0 {
+			u.pageDragAccum -= float64(moved) * step
+			u.m.scroll -= moved
+			if u.m.scroll < 0 {
+				u.m.scroll = 0
+			}
+			if u.m.scroll > u.m.subMaxScroll {
+				u.m.scroll = u.m.subMaxScroll
+			}
+		}
 	}
 }
 
