@@ -25,6 +25,12 @@ type options struct {
 	// WARP/MASQUE session; a health repair must never inherit it.
 	speedGate      bool
 	acceptSlowWarp bool
+	// noSpeedTest is the settings-page switch that turns off every
+	// connect-time speed gate (the WARP downlink floor, the OpenVPN relay
+	// floor and the Psiphon slow-server re-draw): a working node is kept
+	// whatever its measured speed, and the extra probe transfers are skipped.
+	// Health repairs never ran the gates in the first place.
+	noSpeedTest    bool
 	port           int
 	proto          string
 	listen         string

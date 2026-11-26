@@ -58,7 +58,7 @@ When `WARP_CLIENT_HOME` is not set, VEGSH anchors its home to the executable dir
 | Page | Contents |
 |---|---|
 | **Home** | Connect/disconnect, session clock, current exit (flag, colo, latency, up/down), protocol selector, selected node detail, live throughput chart |
-| **Settings** | Capture (system proxy / VPN-TUN, local port, LAN access, API port, address family, MTU), routing (proxy mode, default node, split tunneling, domain lists, geo split), startup/behavior, DNS & exit (Psiphon / OpenVPN region) |
+| **Settings** | Capture (system proxy / VPN-TUN, local port, LAN access, API port, address family, MTU), post-connect speed test switch (auto-skip nodes measured too slow), routing (proxy mode, default node, split tunneling, domain lists, geo split), startup/behavior, DNS & exit (Psiphon / OpenVPN region) |
 | **About** | Versions, data/core paths, licenses, upstream project links |
 | **Logs** | Runtime log, connection history, diagnostics |
 
@@ -157,7 +157,7 @@ Requires Go 1.26+ (module targets `go 1.26.3`).
 $env:GOPROXY='https://goproxy.cn,direct'
 
 # Build the Windows GUI/CLI binary
-go build -trimpath -ldflags "-s -w -H windowsgui -X main.version=1.0 -X main.windowsGUIBuild=1" -o vegsh.exe .
+go build -trimpath -ldflags "-s -w -H windowsgui -X main.version=1.0.261126 -X main.windowsGUIBuild=1" -o vegsh.exe .
 
 # Assemble the portable ZIP (recommended release path)
 powershell -ExecutionPolicy Bypass -File .\pack.ps1 [-MihomoPath <mihomo.exe>] [-PsiphonExePath <psiphon.exe>] [-PsiphonConfigPath <client.config>]

@@ -17,8 +17,8 @@ import (
 // stays put and the content is clipped to the body rectangle.
 const (
 	setCardGap  = 14.0
-	setConnBase = 252.0 // LAN sharing off: no credential rows at all
-	setConnLan  = 376.0 // sharing on: + two credential rows and the hint line
+	setConnBase = 304.0 // LAN sharing off: no credential rows at all
+	setConnLan  = 428.0 // sharing on: + two credential rows and the hint line
 	setRoutingH = 300.0
 	setExitH    = 392.0
 )
@@ -225,9 +225,21 @@ func (u *natUI) paintSetConnection(c *walk.Canvas, x, y, w float64) {
 		}
 		u.txt(c, x+16, cy+246, w-32, 16, lanAuthHint(s), u.f.f8, hintCol)
 		u.familyRow(c, x, cy+276, w)
+		u.speedTestRow(c, x, cy+328, w)
 		return
 	}
 	u.familyRow(c, x, cy+158, w)
+	u.speedTestRow(c, x, cy+210, w)
+}
+
+// speedTestRow is the connect-time speed gate switch. The gate runs on every
+// connect path (WARP/MASQUE downlink floor, OpenVPN relay floor, Psiphon
+// slow-server re-draw), so it lives on the connection card rather than inside
+// either exit's section. Off keeps any working node whatever its measured
+// speed; the next connect picks the change up.
+func (u *natUI) speedTestRow(c *walk.Canvas, x, y, w float64) {
+	u.rowToggle(c, x, y, w, "set:speedtest", tr("连接后自动测速"),
+		tr("实测速度过低时自动更换节点，关闭后保留任何可用节点"), u.m.set.SpeedTest, true)
 }
 
 // captureRow is the capture-mode dropdown: system proxy or TUN device.

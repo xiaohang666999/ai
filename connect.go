@@ -166,10 +166,11 @@ func runConnectCmd(ctx context.Context, opts options) error {
 }
 
 func runConnectInner(ctx context.Context, opts options) error {
-	// Only a user-initiated connect applies the downlink floor. A health
-	// repair calls startAndVerify directly and must never refuse a working
-	// tunnel just because the network is slow at that moment.
-	opts.speedGate = true
+	// Only a user-initiated connect applies the downlink floor, and only while
+	// the settings switch leaves the speed test on. A health repair calls
+	// startAndVerify directly and must never refuse a working tunnel just
+	// because the network is slow at that moment.
+	opts.speedGate = !opts.noSpeedTest
 	if opts.mixedPort == 0 {
 		opts.mixedPort = core.DefaultMixedPort
 	}
@@ -746,9 +747,10 @@ func runConnectOpenVPN(ctx context.Context, opts options) error {
 	opts.family = famV4
 	opts.ipv6 = false
 	outer = nil
-	// An interactive connect shops for a usable exit; the health repair builds
-	// its own options and deliberately leaves this off.
-	opts.openvpnSpeedGate = true
+	// An interactive connect shops for a usable exit unless the settings
+	// switch turned the speed test off; the health repair builds its own
+	// options and deliberately leaves the gate off.
+	opts.openvpnSpeedGate = !opts.noSpeedTest
 
 	label := protoLabel(opts.proto) + "+OpenVPN"
 	stageMsg(fmt.Sprintf("[%s] 开始连接：先起基础协议，再经 VPN Gate 节点出站…", label))
@@ -1201,27 +1203,31 @@ func connectPsiphonOn(ctx context.Context, opts options, ce cachedEndpoint, run 
 	// exit alone decides its throughput (measured spread ~150–700 KB/s behind the
 	// same underlay). A restart reuses the SAME SOCKS port, so mihomo's rendered
 	// config keeps pointing at it. Slow-but-working is accepted, never failed.
-	for attempt := 0; ; attempt++ {
-		bps := measureDownBps(opts.mixedPort, psiphonSpeedProbeBytes, psiphonSpeedProbeTimeout)
-		if bps <= 0 {
-			break
-		}
-		stageMsg(fmt.Sprintf("[%s] Psiphon 出口速度 ≈ %d KB/s", label, bps/1024))
-		if bps >= psiphonMinBps || attempt >= psiphonSpeedRetries {
-			break
-		}
-		stageMsg(fmt.Sprintf("[%s] 出口过慢（<%d KB/s），重启 Psiphon 换服务器…", label, psiphonMinBps/1024))
-		if serr := ps.Stop(); serr != nil {
-			break
-		}
-		if serr := ps.Start(ctx, l); serr != nil {
-			break
-		}
-		if serr := ps.WaitForSocks(ctx, psiphonSocksWait); serr != nil {
-			break
-		}
-		if serr := ps.WaitForTunnel(ctx, psiphonTunnelWait); serr != nil {
-			break
+	// The settings speed-test switch skips the whole probe: no extra download,
+	// no restart — whatever server Psiphon landed on is kept.
+	if !opts.noSpeedTest {
+		for attempt := 0; ; attempt++ {
+			bps := measureDownBps(opts.mixedPort, psiphonSpeedProbeBytes, psiphonSpeedProbeTimeout)
+			if bps <= 0 {
+				break
+			}
+			stageMsg(fmt.Sprintf("[%s] Psiphon 出口速度 ≈ %d KB/s", label, bps/1024))
+			if bps >= psiphonMinBps || attempt >= psiphonSpeedRetries {
+				break
+			}
+			stageMsg(fmt.Sprintf("[%s] 出口过慢（<%d KB/s），重启 Psiphon 换服务器…", label, psiphonMinBps/1024))
+			if serr := ps.Stop(); serr != nil {
+				break
+			}
+			if serr := ps.Start(ctx, l); serr != nil {
+				break
+			}
+			if serr := ps.WaitForSocks(ctx, psiphonSocksWait); serr != nil {
+				break
+			}
+			if serr := ps.WaitForTunnel(ctx, psiphonTunnelWait); serr != nil {
+				break
+			}
 		}
 	}
 	// startAndVerify already proved a real request completed through the mixed

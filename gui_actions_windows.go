@@ -219,6 +219,16 @@ func (u *natUI) actionSetting(id string) {
 	case "set:autoconnect":
 		toggle(func(s *clientSettings) { s.AutoConnect = !s.AutoConnect })
 		return
+	case "set:speedtest":
+		toggle(func(s *clientSettings) { s.SpeedTest = !s.SpeedTest })
+		// The gate only runs at connect time, so say what changed in the log
+		// (and the dock): "why did it keep a slow node" then has an answer.
+		if u.m.set.SpeedTest {
+			u.addLog(tr("连接后自动测速已开启：速度过低的节点会被自动跳过"), false)
+		} else {
+			u.addLog(tr("连接后自动测速已关闭：不再因速度过慢更换节点"), false)
+		}
+		return
 	}
 
 	if v, ok := strings.CutPrefix(id, "pickcapture:"); ok {

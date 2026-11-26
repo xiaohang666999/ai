@@ -58,7 +58,7 @@ VEGSH\
 | 页面 | 内容 |
 |---|---|
 | **主页** | 连接/断开、会话计时、当前出口（国旗、colo、延迟、上下行）、协议选择、节点详情、实时吞吐图表 |
-| **设置** | 接管方式（系统代理 / VPN-TUN、本地端口、局域网访问、API 端口、地址族、MTU）、路由（代理模式、默认节点、分流、域名列表、Geo 分流）、启动/行为、DNS 与出口（Psiphon / OpenVPN 地区） |
+| **设置** | 接管方式（系统代理 / VPN-TUN、本地端口、局域网访问、API 端口、地址族、MTU）、连接后自动测速开关（实测过慢自动换节点，可关闭）、路由（代理模式、默认节点、分流、域名列表、Geo 分流）、启动/行为、DNS 与出口（Psiphon / OpenVPN 地区） |
 | **关于** | 版本、数据/核心路径、许可证、上游项目链接 |
 | **日志** | 运行日志、连接历史、诊断信息 |
 
@@ -157,7 +157,7 @@ Psiphon 是**出口**，不是基础协议。`connect --psiphon` 会先建立基
 $env:GOPROXY='https://goproxy.cn,direct'
 
 # 构建 Windows GUI/CLI 二进制
-go build -trimpath -ldflags "-s -w -H windowsgui -X main.version=1.0 -X main.windowsGUIBuild=1" -o vegsh.exe .
+go build -trimpath -ldflags "-s -w -H windowsgui -X main.version=1.0.261126 -X main.windowsGUIBuild=1" -o vegsh.exe .
 
 # 组装便携 ZIP（推荐发布路径）
 powershell -ExecutionPolicy Bypass -File .\pack.ps1 [-MihomoPath <mihomo.exe>] [-PsiphonExePath <psiphon.exe>] [-PsiphonConfigPath <client.config>]
