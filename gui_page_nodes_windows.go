@@ -36,7 +36,7 @@ func (u *natUI) paintNodes(c *walk.Canvas) {
 	u.paintModeFilterRow(c, x, rowY, w, sub)
 
 	tableY := rowY + 40
-	tableH := u.dh - 14 - tableY
+	tableH := u.bodyBottom() - tableY
 	if tableH < 160 {
 		tableH = 160
 	}

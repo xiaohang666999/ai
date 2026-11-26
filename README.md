@@ -155,7 +155,7 @@ Requires Go 1.26+ (module targets `go 1.26.3`).
 $env:GOPROXY='https://goproxy.cn,direct'
 
 # Build the Windows GUI/CLI binary
-go build -trimpath -ldflags "-s -w -H windowsgui -X main.version=1.0 -X main.windowsGUIBuild=1" -o vegsh.exe .
+go build -trimpath -ldflags "-s -w -H windowsgui -X main.version=1.0.2611.01 -X main.windowsGUIBuild=1" -o vegsh.exe .
 
 # Assemble the portable ZIP (recommended release path)
 powershell -ExecutionPolicy Bypass -File .\pack.ps1 [-MihomoPath <mihomo.exe>] [-PsiphonExePath <psiphon.exe>] [-PsiphonConfigPath <client.config>]

@@ -12,7 +12,9 @@ import "testing"
 // handle by a fraction of its movable span instead of clicking mid-track, which
 // lands inside the handle once the page is only a little taller than the body.
 func TestScrollbarDrag(t *testing.T) {
-	u := &natUI{m: newNatModel(), k: 1, dw: 1080}
+	// dh is the 700-tall design grid the painter always sets; the body height
+	// (bodyH) is derived from it.
+	u := &natUI{m: newNatModel(), k: 1, dw: 1080, dh: 700}
 	u.clampSetScroll()
 	max := u.m.setScrollMax
 	if max <= 0 {

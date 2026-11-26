@@ -155,7 +155,7 @@ Psiphon 是**出口**，不是基础协议。`connect --psiphon` 会先建立基
 $env:GOPROXY='https://goproxy.cn,direct'
 
 # 构建 Windows GUI/CLI 二进制
-go build -trimpath -ldflags "-s -w -H windowsgui -X main.version=1.0 -X main.windowsGUIBuild=1" -o vegsh.exe .
+go build -trimpath -ldflags "-s -w -H windowsgui -X main.version=1.0.2611.01 -X main.windowsGUIBuild=1" -o vegsh.exe .
 
 # 组装便携 ZIP（推荐发布路径）
 powershell -ExecutionPolicy Bypass -File .\pack.ps1 [-MihomoPath <mihomo.exe>] [-PsiphonExePath <psiphon.exe>] [-PsiphonConfigPath <client.config>]

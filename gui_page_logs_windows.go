@@ -77,11 +77,26 @@ func (u *natUI) paintLogActions(c *walk.Canvas, x, y, w float64) {
 	}
 }
 
+// logLevelStyle picks a log line's tag and colours. It is shared by the run-log
+// page and the log dock, so one line reads the same wherever it is shown.
+func logLevelStyle(l natLog) (tag string, pillBg, pillCol, msgCol walk.Color) {
+	tag, pillBg, pillCol, msgCol = "INFO", th.inset, th.dim, th.text
+	switch {
+	case l.lv == 2:
+		tag, pillBg, pillCol, msgCol = "ERR", th.badSoft, th.bad, th.bad
+	case l.lv == 1:
+		tag, pillBg, pillCol, msgCol = "WARN", th.warnSoft, th.warn, th.warn
+	case l.core:
+		tag, pillBg, pillCol = "CORE", mix(th.vio, th.card, 0.86), th.vio
+	}
+	return
+}
+
 // paintRunLog is a light log reader: newest at the bottom, one line per entry,
 // level tagged. It shares the session list's card surface and text colours so
 // the two views read as one material, and it always follows the newest line.
 func (u *natUI) paintRunLog(c *walk.Canvas, x, y, w float64) {
-	h := 670 - y
+	h := u.bodyBottom() - y
 	u.cardPlain(c, x, y, w, h)
 
 	const lineH = 24.0
@@ -117,16 +132,7 @@ func (u *natUI) paintRunLog(c *walk.Canvas, x, y, w float64) {
 	for _, l := range lines {
 		// Level pill: a soft tinted chip carries the level so a wall of core
 		// chatter stays scannable, and warnings/errors jump out by colour.
-		tag, pillBg, pillCol := "INFO", th.inset, th.dim
-		msgCol := th.text
-		switch {
-		case l.lv == 2:
-			tag, pillBg, pillCol, msgCol = "ERR", th.badSoft, th.bad, th.bad
-		case l.lv == 1:
-			tag, pillBg, pillCol, msgCol = "WARN", th.warnSoft, th.warn, th.warn
-		case l.core:
-			tag, pillBg, pillCol = "CORE", mix(th.vio, th.card, 0.86), th.vio
-		}
+		tag, pillBg, pillCol, msgCol := logLevelStyle(l)
 		u.txt(c, x+16, ly, 62, lineH, l.at.Format("15:04:05"), u.f.fmono, th.faint)
 		pill := u.r(x+84, ly+3, 50, lineH-6)
 		u.fillRound(c, pillBg, pill, 5)
@@ -143,7 +149,7 @@ func (u *natUI) paintRunLog(c *walk.Canvas, x, y, w float64) {
 func (u *natUI) runLogBox() (x, y, w, h float64) {
 	x, w = u.contentX(), u.contentW()
 	y = shellBodyY + 46
-	h = 670 - y
+	h = u.bodyBottom() - y
 	return
 }
 
@@ -249,7 +255,7 @@ func (u *natUI) dragLogTo(py int) {
 // attempts, the endpoint chosen, and the disconnect. Core chatter is filtered
 // out, so this is a history of sessions rather than a dump.
 func (u *natUI) paintSessions(c *walk.Canvas, x, y, w float64) {
-	h := 670 - y
+	h := u.bodyBottom() - y
 	u.cardPlain(c, x, y, w, h)
 	var lines []natLog
 	for _, l := range u.m.logs {
@@ -288,7 +294,7 @@ func (u *natUI) paintSessions(c *walk.Canvas, x, y, w float64) {
 // the newest log lines. The full log lives on its own tab, so repeating all of
 // it here only made this tab a dimmer copy of that one.
 func (u *natUI) paintDebug(c *walk.Canvas, x, y, w float64) {
-	h := 670 - y
+	h := u.bodyBottom() - y
 	u.cardPlain(c, x, y, w, h)
 
 	const (
