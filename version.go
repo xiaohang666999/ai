@@ -14,10 +14,8 @@ import (
 // nothing here points at a repository of its own.
 const coreRepoURL = "https://github.com/MetaCubeX/mihomo"
 
-// version is this build's release number, baked in so a plain `go build`
-// reports it too. pack.ps1 still overrides it through -ldflags
-// "-X main.version=" (its -Version default is kept in sync with this value).
-var version = "1.0.261126"
+// Set through -ldflags "-X main.version=" from the git tag; see VERSIONING.md.
+var version = "dev"
 
 // windowsGUIBuild is "1" only in the -H windowsgui build (pack.ps1 injects
 // it). The UAC proxy helper may only run from that build: relaunching a

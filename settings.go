@@ -85,16 +85,6 @@ type clientSettings struct {
 	// exit, and a session can only land in one place.
 	OpenVPN    bool `json:"openvpn"`
 	AutoRepair bool `json:"auto_repair"`
-	// SpeedTest is the connect-time speed gate. Once a tunnel passes its
-	// data-plane checks, the verification download's measured downlink decides
-	// whether the node is kept: below the usable floor the connect rotates to
-	// another node (bounded retries, then slow-but-working is kept). It applies
-	// to every exit path — the WARP/MASQUE floor, the OpenVPN relay floor and
-	// the Psiphon slow-server re-draw. Off keeps every working node whatever
-	// its speed and skips the extra probe/restart transfers. On by default, so
-	// an upgraded install behaves exactly as before; a file written before the
-	// switch existed simply lacks the key and loads the default.
-	SpeedTest bool `json:"speed_test"`
 	// PsiphonRegion is the preferred Psiphon exit country (ISO alpha-2, upper
 	// case). Empty means "automatic" — Psiphon picks the region itself.
 	PsiphonRegion string `json:"psiphon_region"`
@@ -205,7 +195,6 @@ func defaultSettings() clientSettings {
 		OuterProto:  protoWG,
 		InnerProto:  protoWG,
 		AutoRepair:  true,
-		SpeedTest:   true,
 		MixedPort:   core.DefaultMixedPort,
 		APIPort:     core.DefaultAPIPort,
 		CaptureMode: captureProxy,
@@ -602,7 +591,6 @@ func (s clientSettings) apply(o *options) {
 	o.domainDirect = s.domainDirectList()
 	o.domainProxy = s.domainProxyList()
 	o.noGuard = !s.AutoRepair
-	o.noSpeedTest = !s.SpeedTest
 	o.endpointRank = normalizeRank(s.EndpointRank)
 	o.ipStack = normalizeStack(s.IPStack)
 	o.congestion = normalizeCC(s.Congestion)
