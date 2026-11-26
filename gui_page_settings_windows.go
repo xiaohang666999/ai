@@ -718,7 +718,10 @@ func (u *natUI) aboutStrip(c *walk.Canvas, x, y, w float64, title string, fields
 }
 
 func (u *natUI) paintAbout(c *walk.Canvas, x, y, w float64) {
-	card1, card2, card3, links, footer := aboutLayout(y)
+	// The third card slot is reserved by aboutLayout (and pinned by its test)
+	// but carries no strip yet; discard it instead of leaving an unused
+	// variable that fails the Windows build.
+	card1, card2, _, links, footer := aboutLayout(y)
 
 	u.aboutStrip(c, x, card1, w, tr("本程序"), [][2]string{
 		{tr("名称"), productName},
@@ -765,4 +768,3 @@ func (u *natUI) paintAbout(c *walk.Canvas, x, y, w float64) {
 		tr("本程序只在你自己的设备上配置一条加密隧道，不提供、不代理任何服务器资源；程序按「现状」提供，不对可用性、速度或适用性作任何承诺。"),
 		u.f.f8, th.dim)
 }
-

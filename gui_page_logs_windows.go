@@ -10,6 +10,23 @@ import (
 
 var logTabIDs = []string{"run", "conn", "debug"}
 
+// logLevelStyle maps one line's level and source to its pill and message
+// colours: a soft tinted chip carries the level so a wall of core chatter
+// stays scannable, and warnings/errors jump out by colour. The run-log page
+// and the bottom log dock share it, so a line reads the same in both.
+func logLevelStyle(l natLog) (tag string, pillBg, pillCol, msgCol walk.Color) {
+	tag, pillBg, pillCol, msgCol = "INFO", th.inset, th.dim, th.text
+	switch {
+	case l.lv == 2:
+		tag, pillBg, pillCol, msgCol = "ERR", th.badSoft, th.bad, th.bad
+	case l.lv == 1:
+		tag, pillBg, pillCol, msgCol = "WARN", th.warnSoft, th.warn, th.warn
+	case l.core:
+		tag, pillBg, pillCol = "CORE", mix(th.vio, th.card, 0.86), th.vio
+	}
+	return
+}
+
 func (u *natUI) paintLogs(c *walk.Canvas) {
 	x, y, w := u.contentX(), shellBodyY, u.contentW()
 	labels := []string{tr("运行日志"), tr("连接记录"), tr("调试信息")}
@@ -115,18 +132,7 @@ func (u *natUI) paintRunLog(c *walk.Canvas, x, y, w float64) {
 	lines := all[start:end]
 	ly := y + 14
 	for _, l := range lines {
-		// Level pill: a soft tinted chip carries the level so a wall of core
-		// chatter stays scannable, and warnings/errors jump out by colour.
-		tag, pillBg, pillCol := "INFO", th.inset, th.dim
-		msgCol := th.text
-		switch {
-		case l.lv == 2:
-			tag, pillBg, pillCol, msgCol = "ERR", th.badSoft, th.bad, th.bad
-		case l.lv == 1:
-			tag, pillBg, pillCol, msgCol = "WARN", th.warnSoft, th.warn, th.warn
-		case l.core:
-			tag, pillBg, pillCol = "CORE", mix(th.vio, th.card, 0.86), th.vio
-		}
+		tag, pillBg, pillCol, msgCol := logLevelStyle(l)
 		u.txt(c, x+16, ly, 62, lineH, l.at.Format("15:04:05"), u.f.fmono, th.faint)
 		pill := u.r(x+84, ly+3, 50, lineH-6)
 		u.fillRound(c, pillBg, pill, 5)

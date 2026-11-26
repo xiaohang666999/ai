@@ -62,6 +62,8 @@ When `WARP_CLIENT_HOME` is not set, VEGSH anchors its home to the executable dir
 | **About** | Versions, data/core paths, licenses, upstream project links |
 | **Logs** | Runtime log, connection history, diagnostics |
 
+A four-line log dock is pinned to the very bottom of the window on every page: it always shows the newest log lines (with level tags), and clicking it opens the Logs page for the full history.
+
 Appearance: light (default), dark, or follow system. Language: **中文 (default)** or English. Preferences are stored in `settings.json` next to the executable.
 
 ### Screenshots

@@ -19,12 +19,14 @@ const (
 // The window is adaptive: it opens near 1280x860 logical pixels, resizes freely
 // on both axes, and the pages re-layout through breakpoints instead of keeping
 // one fixed ratio. These are the preferred startup size and the smallest layout
-// the pages support, all in 96-DPI logical pixels.
+// the pages support, all in 96-DPI logical pixels. The height floor includes
+// the always-visible log dock, so the page area keeps its designed 560-logical
+// minimum instead of shrinking further to make room for the dock.
 const (
 	defaultW = 1280.0
 	defaultH = 860.0
 	minW     = 880.0
-	minH     = 560.0
+	minH     = 560.0 + logDockH
 )
 
 // The window has no OS caption: the reference draws only three round buttons in

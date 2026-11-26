@@ -87,8 +87,13 @@ func (u *natUI) paintShell(c *walk.Canvas) {
 		u.paintHome(c)
 	}
 	u.ay = 0
-	// Open dropdown overlays next, so they sit above the page (and hit-testing
-	// scans spots back to front), and the window buttons above everything.
+	// The log dock is chrome, not page content: it stays pinned to the window
+	// foot while the page body slides, on every page. The page grid already
+	// ends above it (pageGrid reserves logDockH).
+	u.paintLogDock(c)
+	// Open dropdown overlays next, so they sit above the page and the dock
+	// (and hit-testing scans spots back to front), and the window buttons
+	// above everything.
 	u.paintDropdownPopups(c)
 	u.paintCaption(c, u.dw)
 }
@@ -280,9 +285,12 @@ func (u *natUI) paintSidebar(c *walk.Canvas) {
 		u.addSpot("nav:"+n.page, r, true)
 	}
 
-	// Foot: the running core version, pinned to the bottom of the rail.
-	fullH := u.dh + capH
-	footY := fullH - 40
+	// Foot: the running core version, pinned to the bottom of the rail. The
+	// helpers below paint in page coordinates — sy() already skips the caption
+	// band — so the rail's bottom edge is u.dh. The old math added capH a
+	// second time and pushed the version line past the window's bottom edge,
+	// which clipped it (the "bottom-left corner is covered" report).
+	footY := u.dh - 40
 	u.hline(c, 14, footY-12, sw-28, th.line2)
 	core := "mihomo " + orEmpty(u.m.coreVersion, tr("未探测"))
 	u.txt(c, 22, footY, sw-44, 18, core, u.f.f8, th.faint)
