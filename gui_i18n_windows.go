@@ -444,6 +444,12 @@ var enStrings = map[string]string{
 	"选择节点 · 按延迟排序":      "Select node · by latency",
 	"当前最低延迟":            "Lowest latency",
 	"管理节点与分组 → 模式页":     "Manage nodes & groups → Mode page",
+	// Connect-time availability gate ("连接时验证节点可用性").
+	"连接时验证节点可用性":         "Verify node availability on connect",
+	"连接前实测吞吐，过慢的节点会被跳过":  "Measures throughput first; nodes that are too slow are skipped",
+	"已关闭：直接连接，不检测速度与可用性": "Off: connect directly, without speed or availability checks",
+	"已开启可用性验证：过慢的节点会被跳过": "Availability checks on: slow nodes are skipped",
+	"已关闭可用性验证：下次连接将直接连接": "Availability checks off: the next connect goes straight to the node",
 }
 
 // trfKeys holds the parameterised strings. fmt verbs are part of the key, so

@@ -149,6 +149,15 @@ type options struct {
 	// slow beats nothing.
 	openvpnAcceptSlow bool
 
+	// skipAvailabilityCheck is the settings page's "连接时验证节点可用性"
+	// switch, inverted: with it set, a connect skips the whole data-plane
+	// availability gate — the round-trip, the throughput probe and every
+	// per-protocol speed floor — and uses the chosen node as-is instead of
+	// rotating away from it or retiring it for measuring slowly. The zero
+	// value keeps the gate on, so every path that never sets it (health
+	// repair) behaves exactly as before.
+	skipAvailabilityCheck bool
+
 	// coreLog, set by the GUIs, receives a copy of the core process's
 	// stdout/stderr for the log panel. Never a flag.
 	coreLog io.Writer
@@ -498,6 +507,10 @@ func setupConnectFlags(fs *flag.FlagSet, o *options) {
 	fs.StringVar(&o.psiphonExe, "psiphon-exe", "", "")
 	fs.BoolVar(&o.openvpnMode, "openvpn", false, "")
 	fs.StringVar(&o.openvpnRegion, "openvpn-region", "", "")
+	// Skip the connect-time availability/speed gate (the settings page's
+	// "连接时验证节点可用性" switch): connect directly, even to a node that
+	// would be rejected for measuring too slow.
+	fs.BoolVar(&o.skipAvailabilityCheck, "no-availability-check", false, "")
 	o.wantMeta = true
 }
 

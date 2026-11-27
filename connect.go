@@ -168,8 +168,10 @@ func runConnectCmd(ctx context.Context, opts options) error {
 func runConnectInner(ctx context.Context, opts options) error {
 	// Only a user-initiated connect applies the downlink floor. A health
 	// repair calls startAndVerify directly and must never refuse a working
-	// tunnel just because the network is slow at that moment.
-	opts.speedGate = true
+	// tunnel just because the network is slow at that moment. The settings
+	// page can switch the whole availability gate off, which retires this
+	// floor along with the throughput probe inside startAndVerify.
+	opts.speedGate = !opts.skipAvailabilityCheck
 	if opts.mixedPort == 0 {
 		opts.mixedPort = core.DefaultMixedPort
 	}
@@ -747,8 +749,10 @@ func runConnectOpenVPN(ctx context.Context, opts options) error {
 	opts.ipv6 = false
 	outer = nil
 	// An interactive connect shops for a usable exit; the health repair builds
-	// its own options and deliberately leaves this off.
-	opts.openvpnSpeedGate = true
+	// its own options and deliberately leaves this off. The settings switch
+	// that disables availability verification turns it off too — a slow relay
+	// then stays selected instead of being rotated past.
+	opts.openvpnSpeedGate = !opts.skipAvailabilityCheck
 
 	label := protoLabel(opts.proto) + "+OpenVPN"
 	stageMsg(fmt.Sprintf("[%s] 开始连接：先起基础协议，再经 VPN Gate 节点出站…", label))
@@ -779,8 +783,10 @@ func runConnectOpenVPN(ctx context.Context, opts options) error {
 		}
 		// A single cached endpoint is where a dead peer costs the most: every
 		// combination rides it, so one bad endpoint looks like "all relays are
-		// dead" for minutes. Verify it before spending a warmup on it.
-		if len(cands) == 1 {
+		// dead" for minutes. Verify it before spending a warmup on it — unless
+		// availability verification is off, in which case the user asked for
+		// the connect to go straight at the node.
+		if len(cands) == 1 && !opts.skipAvailabilityCheck {
 			stageMsg(fmt.Sprintf("[%s] 缓存里只有 1 个基础端点，先确认它能转发数据…", label))
 			if berr := probeBaseEndpoint(ctx, opts, cands[0], run); berr != nil {
 				stageMsg(fmt.Sprintf("[%s] %v，重新扫描…", label, berr))
@@ -985,7 +991,7 @@ func runConnectOpenVPN(ctx context.Context, opts options) error {
 				// WireGuard tunnel to a dead peer still "starts" — so the relay
 				// gets blamed for eight attempts in a row. Prove the base once,
 				// before spending the rest of the budget on it.
-				if !baseChecked[ce.Endpoint] {
+				if !opts.skipAvailabilityCheck && !baseChecked[ce.Endpoint] {
 					baseChecked[ce.Endpoint] = true
 					stageMsg(fmt.Sprintf("[%s] 自检基础端点 %s（确认它能转发数据）…", label, ce.Endpoint))
 					if berr := probeBaseEndpoint(ctx, opts, ce, run); berr != nil {
@@ -1201,7 +1207,9 @@ func connectPsiphonOn(ctx context.Context, opts options, ce cachedEndpoint, run 
 	// exit alone decides its throughput (measured spread ~150–700 KB/s behind the
 	// same underlay). A restart reuses the SAME SOCKS port, so mihomo's rendered
 	// config keeps pointing at it. Slow-but-working is accepted, never failed.
-	for attempt := 0; ; attempt++ {
+	// With the availability gate off this speed probe is skipped entirely: the
+	// user asked to keep the exit they picked, not to re-draw for a faster one.
+	for attempt := 0; !opts.skipAvailabilityCheck; attempt++ {
 		bps := measureDownBps(opts.mixedPort, psiphonSpeedProbeBytes, psiphonSpeedProbeTimeout)
 		if bps <= 0 {
 			break
@@ -1449,8 +1457,16 @@ func startAndVerify(ctx context.Context, opts options, ce cachedEndpoint, run pr
 		case werr := <-warmDone:
 			stopWatch()
 			if werr != nil {
-				_ = c.Stop()
-				return clientState{}, werr
+				// The warm-up is a handshake proof, so with the availability
+				// gate switched off a slow relay that misses the window must
+				// not fail the connect: the user asked to use the node as-is,
+				// and the status loop reports whether it actually carries
+				// traffic. A definitive AUTH_FAILED still ends the attempt.
+				if !opts.skipAvailabilityCheck {
+					_ = c.Stop()
+					return clientState{}, werr
+				}
+				stageMsg(fmt.Sprintf("[%s] 中继握手窗口内未确认（%v），可用性验证已关闭，继续连接…", label, werr))
 			}
 		case reason := <-fatalCh:
 			// AUTH_FAILED is terminal for this relay: retrying the same node
@@ -1468,10 +1484,22 @@ func startAndVerify(ctx context.Context, opts options, ce cachedEndpoint, run pr
 	// (HTTPS, DNS via the hostname, optional IPv6, exit IP) prove it. The
 	// system proxy is still untouched here — a failed candidate leaves no
 	// host mutation to undo.
-	probe, perr := verifyTunnel(opts, func(msg string) { stageMsg(fmt.Sprintf("[%s] %s", label, msg)) })
-	if perr != nil {
-		_ = c.Stop()
-		return clientState{}, fmt.Errorf("数据面验证失败: %w", perr)
+	//
+	// The settings page's "连接时验证节点可用性" switch replaces this whole
+	// gate: off means the connect goes straight to Connected with no probe and
+	// no throughput transfer, so a node is never judged unavailable for being
+	// slow (or for stalling under the probe payload). The status loop fills
+	// the exit fields in live once the session is up.
+	var probe clientState
+	if opts.skipAvailabilityCheck {
+		stageMsg(fmt.Sprintf("[%s] 已关闭可用性验证：跳数据面探测与测速，直接连接…", label))
+	} else {
+		var perr error
+		probe, perr = verifyTunnel(opts, func(msg string) { stageMsg(fmt.Sprintf("[%s] %s", label, msg)) })
+		if perr != nil {
+			_ = c.Stop()
+			return clientState{}, fmt.Errorf("数据面验证失败: %w", perr)
+		}
 	}
 
 	// A relay that passed every data-plane check can still be unusable: the
