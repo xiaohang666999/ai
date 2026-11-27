@@ -545,8 +545,15 @@ func (u *natUI) paintSetExit(c *walk.Canvas, x, y, w float64) {
 	cy := u.card(c, x, y, w, setExitH, tr("出口与启动"))
 	s := u.m.set
 
+	// Switch and region row share one availability gate (the protocol/mode can
+	// stack an exit at all, and the tunnel is not v6-only), but the picker
+	// ignores the switch itself: choosing the country for an exit that is
+	// currently off is how the page is normally filled in (pick the region,
+	// then turn the exit on), and the saved choice is only read when a session
+	// stacks that exit. Disabling it with the switch made a prefilled page look
+	// broken — the region could not be changed until the exit was enabled.
 	v6OK := u.exitV6OK()
-	psiOK := u.exitOK() && v6OK
+	psiOK := u.exitAvailable()
 	psiSub := tr("先连基础协议，再叠加 Psiphon 出口")
 	if !v6OK {
 		psiSub = tr("仅 IPv6 下不可用：Psiphon 服务器经 IPv4 出网")
@@ -556,12 +563,12 @@ func (u *natUI) paintSetExit(c *walk.Canvas, x, y, w float64) {
 	u.rowToggle(c, x, cy, w, "psiphon", tr("Psiphon 出口"), psiSub, u.m.psiphon, psiOK)
 	u.txt(c, x+16, cy+56, 120, 20, tr("出口地区"), u.f.f10, th.text)
 	ax, ay, aw, ah := u.regionAnchor()
-	u.paintRegionDropdownSmall(c, ax, ay, aw, ah, psiOK && u.m.psiphon)
+	u.paintRegionDropdownSmall(c, ax, ay, aw, ah, psiOK)
 
 	// V2: the same two-axis shape, but the exit is a VPN Gate relay rendered as
 	// mihomo's own openvpn outbound. It is IPv4 end to end, so an IPv6-only
 	// tunnel disables it outright.
-	ovpnOK := psiOK && u.protoOK(probeOpenVPNProto)
+	ovpnOK := u.vpnExitAvailable()
 	ovpnSub := tr("经 VPN Gate 公共节点出站（仅 IPv4）")
 	if !ovpnOK {
 		switch {
@@ -576,7 +583,10 @@ func (u *natUI) paintSetExit(c *walk.Canvas, x, y, w float64) {
 	u.rowToggle(c, x, cy+104, w, "openvpn", tr("OpenVPN 出口"), ovpnSub, u.m.openvpn, ovpnOK)
 	u.txt(c, x+16, cy+160, 120, 20, tr("出口地区"), u.f.f10, th.text)
 	vx, vy, vw, vh := u.openvpnRegionAnchor()
-	u.paintOpenVPNRegionDropdownSmall(c, vx, vy, vw, vh, ovpnOK && u.m.openvpn)
+	// Same rule for the VPN Gate picker: it also needs a core that can parse
+	// the openvpn outbound the list, probe and connect all go through, but it
+	// does not need the OpenVPN switch to be on.
+	u.paintOpenVPNRegionDropdownSmall(c, vx, vy, vw, vh, ovpnOK)
 
 	u.rowToggle(c, x, cy+208, w, "set:autostart", tr("开机自动启动"),
 		tr("写入当前用户的启动项"), s.AutoStart, true)
