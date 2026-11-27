@@ -77,6 +77,48 @@ func TestSettingsRoundTrip(t *testing.T) {
 	if out.AutoStart {
 		t.Error("autostart = true, want false")
 	}
+	// The connect-time speed check defaults to on; the file round trip keeps
+	// whatever the user last chose.
+	if !out.SpeedCheck {
+		t.Error("speed check = false, want the default true")
+	}
+}
+
+// TestSettingsSpeedCheckDefault pins the connect-time speed verification's
+// default and its read path: a file written before the key existed reads as
+// enabled, an explicit false reads as disabled, and apply() folds the result
+// into options.speedCheckOff — the zero value keeps the feature on for every
+// path that never reads settings.json (CLI connect, health repair).
+func TestSettingsSpeedCheckDefault(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("WARP_CLIENT_HOME", dir)
+
+	// No key at all: the shipped default applies.
+	if err := os.WriteFile(filepath.Join(dir, settingsName), []byte(`{"theme": "light"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if got := loadSettings().SpeedCheck; !got {
+		t.Error("speed check = false, want the default true")
+	}
+
+	raw := `{"speed_check": false}`
+	if err := os.WriteFile(filepath.Join(dir, settingsName), []byte(raw), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	s := loadSettings()
+	if s.SpeedCheck {
+		t.Error("speed check = true, want the stored false")
+	}
+	var o options
+	s.apply(&o)
+	if !o.speedCheckOff {
+		t.Error("apply: speedCheckOff = false, want true when the speed check is off")
+	}
+	var oDefault options
+	defaultSettings().apply(&oDefault)
+	if oDefault.speedCheckOff {
+		t.Error("apply: speedCheckOff = true, want false by default")
+	}
 }
 
 // TestSettingsNormalize covers the guards: nothing a hand-edited file can hold

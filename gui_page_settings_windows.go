@@ -212,6 +212,7 @@ func (u *natUI) paintSetConnection(c *walk.Canvas, x, y, w float64) {
 	// empty is the default and means the listener stays open to the LAN;
 	// filling both makes mihomo demand them. Hiding the rows when sharing is
 	// off keeps a password field from sitting on a page where it does nothing.
+	fy := cy + 158
 	if s.AllowLan {
 		u.rowEdit(c, x, cy+156, w, "set:lanuser", tr("共享认证用户名"),
 			s.LanUser, tr("留空表示不验证"))
@@ -224,10 +225,15 @@ func (u *natUI) paintSetConnection(c *walk.Canvas, x, y, w float64) {
 			hintCol = th.warn
 		}
 		u.txt(c, x+16, cy+246, w-32, 16, lanAuthHint(s), u.f.f8, hintCol)
-		u.familyRow(c, x, cy+276, w)
-		return
+		fy = cy + 276
 	}
-	u.familyRow(c, x, cy+158, w)
+	u.familyRow(c, x, fy, w)
+	// Connect-time speed check: on, the program measures a node's up/down
+	// throughput while connecting and a too-slow exit is marked unavailable
+	// (the WARP/MASQUE downlink floor, the VPN Gate relay floor); off, the
+	// connect verifies nothing about speed and the node connects directly.
+	u.rowToggle(c, x, fy+50, w, "set:speedcheck", tr("连接时速度检测"),
+		tr("连接节点时测量上下行速度，低于阈值即标记不可用"), s.SpeedCheck, true)
 }
 
 // captureRow is the capture-mode dropdown: system proxy or TUN device.

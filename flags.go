@@ -22,8 +22,16 @@ type options struct {
 	threshold      int
 	mtu            int
 	// speedGate enables the connect-time downlink floor for a plain
-	// WARP/MASQUE session; a health repair must never inherit it.
-	speedGate      bool
+	// WARP/MASQUE session; a health repair must never inherit it. It is
+	// folded from the settings file (options.speedCheckOff) at connect time.
+	speedGate bool
+	// speedCheckOff is the user's settings switch: when set, the connect-time
+	// speed verification is skipped entirely — both the WARP/MASQUE downlink
+	// gate and the VPN Gate relay speed gate — so a node connects directly
+	// with no availability verification. The zero value keeps the feature ON
+	// for every path that never reads settings.json (CLI connect, health
+	// repair, tests): the setting is the only thing that turns it off.
+	speedCheckOff  bool
 	acceptSlowWarp bool
 	port           int
 	proto          string

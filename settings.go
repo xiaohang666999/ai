@@ -173,6 +173,13 @@ type clientSettings struct {
 	AutoConnect bool `json:"auto_connect"`
 	AutoStart   bool `json:"auto_start"`
 
+	// SpeedCheck enables the connect-time speed verification: when a node is
+	// connected the program measures the up/down throughput and a too-slow
+	// exit is marked unavailable (WARP/MASQUE downlink floor) or the connect
+	// rotates to the next relay (VPN Gate speed floor). Default on; turning it
+	// off connects the node directly with no availability verification.
+	SpeedCheck bool `json:"speed_check"`
+
 	// Starred holds endpoints marked as favourites; the node list shows them
 	// first and they survive a rescan.
 	Starred []string `json:"starred"`
@@ -202,6 +209,7 @@ func defaultSettings() clientSettings {
 		TimeoutSec:  2,
 		DNSLeak:     true,
 		ProxyMode:   modeCustom,
+		SpeedCheck:  true,
 	}
 }
 
@@ -595,6 +603,7 @@ func (s clientSettings) apply(o *options) {
 	o.ipStack = normalizeStack(s.IPStack)
 	o.congestion = normalizeCC(s.Congestion)
 	overrideTuningFromEnv(o)
+	o.speedCheckOff = !s.SpeedCheck
 	o.psiphonRegion = s.PsiphonRegion
 	o.openvpnRegion = s.OpenVPNRegion
 	o.openvpnNodePin = s.OpenVPNNode

@@ -168,8 +168,10 @@ func runConnectCmd(ctx context.Context, opts options) error {
 func runConnectInner(ctx context.Context, opts options) error {
 	// Only a user-initiated connect applies the downlink floor. A health
 	// repair calls startAndVerify directly and must never refuse a working
-	// tunnel just because the network is slow at that moment.
-	opts.speedGate = true
+	// tunnel just because the network is slow at that moment. The user's
+	// settings switch (speedCheckOff) turns the floor off: the connect then
+	// verifies nothing about speed and a slow exit is simply connected.
+	opts.speedGate = !opts.speedCheckOff
 	if opts.mixedPort == 0 {
 		opts.mixedPort = core.DefaultMixedPort
 	}
@@ -747,8 +749,10 @@ func runConnectOpenVPN(ctx context.Context, opts options) error {
 	opts.ipv6 = false
 	outer = nil
 	// An interactive connect shops for a usable exit; the health repair builds
-	// its own options and deliberately leaves this off.
-	opts.openvpnSpeedGate = true
+	// its own options and deliberately leaves this off. The user's settings
+	// switch (speedCheckOff) turns the floor off as well, so a relay that
+	// passes the data-plane check is connected even when it is slow.
+	opts.openvpnSpeedGate = !opts.speedCheckOff
 
 	label := protoLabel(opts.proto) + "+OpenVPN"
 	stageMsg(fmt.Sprintf("[%s] 开始连接：先起基础协议，再经 VPN Gate 节点出站…", label))

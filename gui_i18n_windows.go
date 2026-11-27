@@ -272,6 +272,8 @@ var enStrings = map[string]string{
 	// Settings.
 	"开机自动启动":     "Launch at login",
 	"启动后自动连接":    "Connect on launch",
+	"连接时速度检测":    "Connect-time speed check",
+	"连接节点时测量上下行速度，低于阈值即标记不可用": "Measures up/down speed while connecting a node; below the threshold it is marked unavailable",
 	"模式":             "Mode",
 	"设置已保存":         "Saved",
 	"TUN 模式需要管理员权限": "TUN mode needs administrator rights",

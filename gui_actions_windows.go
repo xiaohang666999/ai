@@ -223,6 +223,9 @@ func (u *natUI) actionSetting(id string) {
 	case "set:autoconnect":
 		toggle(func(s *clientSettings) { s.AutoConnect = !s.AutoConnect })
 		return
+	case "set:speedcheck":
+		toggle(func(s *clientSettings) { s.SpeedCheck = !s.SpeedCheck })
+		return
 	}
 
 	if v, ok := strings.CutPrefix(id, "pickcapture:"); ok {
