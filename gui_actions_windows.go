@@ -223,6 +223,17 @@ func (u *natUI) actionSetting(id string) {
 	case "set:autoconnect":
 		toggle(func(s *clientSettings) { s.AutoConnect = !s.AutoConnect })
 		return
+	case "set:availability":
+		// The gate lives in the connect pipeline (startAndVerify), so the live
+		// session is untouched until the next connect — which is why this says
+		// so in the log instead of pretending it applied immediately.
+		toggle(func(s *clientSettings) { s.AvailabilityCheck = !s.AvailabilityCheck })
+		if u.m.set.AvailabilityCheck {
+			u.addLog(tr("已开启可用性验证：过慢的节点会被跳过"), false)
+		} else {
+			u.addLog(tr("已关闭可用性验证：下次连接将直接连接"), false)
+		}
+		return
 	}
 
 	if v, ok := strings.CutPrefix(id, "pickcapture:"); ok {

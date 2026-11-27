@@ -236,3 +236,64 @@ func TestSettingsRoutingMigration(t *testing.T) {
 		}
 	}
 }
+
+// TestSettingsAvailabilityGate pins the "连接时验证节点可用性" switch: it ships
+// on, survives a save/load cycle in both positions, and a settings.json written
+// before the key existed still loads as on — the connect pipeline keys its whole
+// verification skip off it, so a migration default of off would silently stop
+// verifying every upgraded install.
+func TestSettingsAvailabilityGate(t *testing.T) {
+	if !defaultSettings().AvailabilityCheck {
+		t.Fatal("default availability check = false, want true")
+	}
+	// The switch reaches the connect pipeline inverted: on = verify (skip off).
+	o := defaultConnectOptions(protoAWG, false, false)
+	defaultSettings().apply(&o)
+	if o.skipAvailabilityCheck {
+		t.Error("skipAvailabilityCheck = true for the default settings, want false")
+	}
+
+	for _, tc := range []struct {
+		on   bool
+		want bool
+	}{
+		{false, false},
+		{true, true},
+	} {
+		dir := t.TempDir()
+		t.Setenv("WARP_CLIENT_HOME", dir)
+		in := defaultSettings()
+		in.AvailabilityCheck = tc.on
+		if err := saveSettings(in); err != nil {
+			t.Fatalf("saveSettings: %v", err)
+		}
+		out := loadSettings()
+		if out.AvailabilityCheck != tc.want {
+			t.Errorf("saved %t, loaded %t", tc.on, out.AvailabilityCheck)
+		}
+		o := defaultConnectOptions(protoAWG, false, false)
+		out.apply(&o)
+		if o.skipAvailabilityCheck != !tc.want {
+			t.Errorf("saved %t: skipAvailabilityCheck = %t, want %t", tc.on, o.skipAvailabilityCheck, !tc.want)
+		}
+	}
+
+	// An old file has no such key at all: the default must win.
+	dir := t.TempDir()
+	t.Setenv("WARP_CLIENT_HOME", dir)
+	legacy := `{"theme": "dark", "proto": "awg"}`
+	if err := os.WriteFile(filepath.Join(dir, settingsName), []byte(legacy), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if !loadSettings().AvailabilityCheck {
+		t.Error("a settings.json without the key loaded availability check = false, want true")
+	}
+	// And an explicit false in the file must be honoured, not overwritten.
+	explicit := `{"availability_check": false}`
+	if err := os.WriteFile(filepath.Join(dir, settingsName), []byte(explicit), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if loadSettings().AvailabilityCheck {
+		t.Error("an explicit availability_check:false was overwritten by the default")
+	}
+}

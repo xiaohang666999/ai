@@ -17,8 +17,8 @@ import (
 // stays put and the content is clipped to the body rectangle.
 const (
 	setCardGap  = 14.0
-	setConnBase = 252.0 // LAN sharing off: no credential rows at all
-	setConnLan  = 376.0 // sharing on: + two credential rows and the hint line
+	setConnBase = 306.0 // LAN sharing off: no credential rows at all
+	setConnLan  = 430.0 // sharing on: + two credential rows and the hint line
 	setRoutingH = 300.0
 	setExitH    = 392.0
 )
@@ -187,9 +187,10 @@ func lanAuthHint(s clientSettings) string {
 }
 
 // paintSetConnection holds the way the host is captured (a dropdown now, not
-// chips), the mixed port, LAN sharing and the tunnel family. Everything else
-// the old card carried (API port, MTU, timeout, DNS leak protection) is
-// internalized in normalize and no longer drawn at all.
+// chips), the mixed port, LAN sharing, the tunnel family and the connect-time
+// availability switch. Everything else the old card carried (API port, MTU,
+// timeout, DNS leak protection) is internalized in normalize and no longer
+// drawn at all.
 func (u *natUI) paintSetConnection(c *walk.Canvas, x, y, w float64) {
 	cy := u.card(c, x, y, w, u.setConnHeight(), tr("连接与接管"))
 	s := u.m.set
@@ -212,6 +213,10 @@ func (u *natUI) paintSetConnection(c *walk.Canvas, x, y, w float64) {
 	// empty is the default and means the listener stays open to the LAN;
 	// filling both makes mihomo demand them. Hiding the rows when sharing is
 	// off keeps a password field from sitting on a page where it does nothing.
+	//
+	// familyY is the family row's top: it follows the credential block when
+	// sharing is on, and the availability switch below it follows the family.
+	familyY := cy + 158
 	if s.AllowLan {
 		u.rowEdit(c, x, cy+156, w, "set:lanuser", tr("共享认证用户名"),
 			s.LanUser, tr("留空表示不验证"))
@@ -224,10 +229,19 @@ func (u *natUI) paintSetConnection(c *walk.Canvas, x, y, w float64) {
 			hintCol = th.warn
 		}
 		u.txt(c, x+16, cy+246, w-32, 16, lanAuthHint(s), u.f.f8, hintCol)
-		u.familyRow(c, x, cy+276, w)
-		return
+		familyY = cy + 276
 	}
-	u.familyRow(c, x, cy+158, w)
+	u.familyRow(c, x, familyY, w)
+	// The availability gate: the connect-time round-trip + throughput probe and
+	// the speed floors that retire a node for measuring slowly. Off makes the
+	// connect go straight at the chosen node, which is the only way onto a node
+	// the gate would otherwise reject.
+	availSub := tr("连接前实测吞吐，过慢的节点会被跳过")
+	if !s.AvailabilityCheck {
+		availSub = tr("已关闭：直接连接，不检测速度与可用性")
+	}
+	u.rowToggle(c, x, familyY+54, w, "set:availability", tr("连接时验证节点可用性"),
+		availSub, s.AvailabilityCheck, true)
 }
 
 // captureRow is the capture-mode dropdown: system proxy or TUN device.

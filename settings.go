@@ -172,6 +172,15 @@ type clientSettings struct {
 	// Behaviour.
 	AutoConnect bool `json:"auto_connect"`
 	AutoStart   bool `json:"auto_start"`
+	// AvailabilityCheck is the connect-time availability gate: a real request
+	// through the fresh tunnel plus a throughput probe, with a per-protocol
+	// speed floor, and a node that cannot carry the payload or measures below
+	// the floor is rotated away from (or, on WARP, marked dead). Off means
+	// "connect directly": no probe, no floor, no endpoint retired for being
+	// slow. Defaults to true, and a settings.json written before this switch
+	// existed loads as true because the default struct value is not
+	// overwritten by a missing JSON key.
+	AvailabilityCheck bool `json:"availability_check"`
 
 	// Starred holds endpoints marked as favourites; the node list shows them
 	// first and they survive a rescan.
@@ -187,21 +196,25 @@ type clientSettings struct {
 
 const settingsName = "settings.json"
 
+// defaultSettings is the shipped preference set. The availability gate ships
+// enabled: a tunnel only counts as connected after it carried real traffic at a
+// usable rate.
 func defaultSettings() clientSettings {
 	return clientSettings{
-		Theme:       themeLight,
-		Lang:        langZH,
-		Proto:       protoAWG,
-		OuterProto:  protoWG,
-		InnerProto:  protoWG,
-		AutoRepair:  true,
-		MixedPort:   core.DefaultMixedPort,
-		APIPort:     core.DefaultAPIPort,
-		CaptureMode: captureProxy,
-		IPFamily:    famV4,
-		TimeoutSec:  2,
-		DNSLeak:     true,
-		ProxyMode:   modeCustom,
+		Theme:             themeLight,
+		Lang:              langZH,
+		Proto:             protoAWG,
+		OuterProto:        protoWG,
+		InnerProto:        protoWG,
+		AutoRepair:        true,
+		AvailabilityCheck: true,
+		MixedPort:         core.DefaultMixedPort,
+		APIPort:           core.DefaultAPIPort,
+		CaptureMode:       captureProxy,
+		IPFamily:          famV4,
+		TimeoutSec:        2,
+		DNSLeak:           true,
+		ProxyMode:         modeCustom,
 	}
 }
 
@@ -591,6 +604,11 @@ func (s clientSettings) apply(o *options) {
 	o.domainDirect = s.domainDirectList()
 	o.domainProxy = s.domainProxyList()
 	o.noGuard = !s.AutoRepair
+	// The connect-time availability gate is the settings page's switch,
+	// inverted: every CLI path leaves skipAvailabilityCheck at its zero value
+	// (gate on), which is exactly the behaviour those paths had before the
+	// switch existed.
+	o.skipAvailabilityCheck = !s.AvailabilityCheck
 	o.endpointRank = normalizeRank(s.EndpointRank)
 	o.ipStack = normalizeStack(s.IPStack)
 	o.congestion = normalizeCC(s.Congestion)
