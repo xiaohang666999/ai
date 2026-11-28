@@ -1567,6 +1567,39 @@ func (u *natUI) exitV6OK() bool {
 	return u.m.set.IPFamily != famV6
 }
 
+// exitAvailable reports whether this configuration could stack an exit at all:
+// the base protocol / mode allows one, and the tunnel is not v6-only. It gates
+// both the exit switch and that exit's region picker — and DELIBERATELY not the
+// switch's current state: the saved region is read by whichever session turns
+// the exit on, so choosing the country first and enabling the exit afterwards
+// is a legitimate order, and the choice changes nothing until a connect reads
+// it. Only an unavailable exit (chained protocol, IPv6-only tunnel) makes the
+// picker inert, because there the choice could never take effect.
+func (u *natUI) exitAvailable() bool {
+	return u.exitOK() && u.exitV6OK()
+}
+
+// vpnExitAvailable is exitAvailable plus the core capability the VPN Gate exit
+// needs: the relay list, the latency probe and the connect all render through
+// mihomo's openvpn outbound, so a core that cannot parse it makes both the
+// switch and the picker meaningless.
+func (u *natUI) vpnExitAvailable() bool {
+	return u.exitAvailable() && u.protoOK(probeOpenVPNProto)
+}
+
+// psiphonExitActive reports that the running session actually exits through
+// Psiphon: connected, the exit switch on, and a configuration able to stack it.
+// A region change re-applies by reconnecting only in this case; with the switch
+// off the saved region is simply picked up by the next session that uses it.
+func (u *natUI) psiphonExitActive() bool {
+	return u.m.connected && u.m.psiphon && u.exitAvailable()
+}
+
+// openvpnExitActive is psiphonExitActive for the VPN Gate exit.
+func (u *natUI) openvpnExitActive() bool {
+	return u.m.connected && u.m.openvpn && u.vpnExitAvailable()
+}
+
 // probeCore stats the core binary and, when present, asks it which protocols
 // it can actually parse (`mihomo -t` on a minimal config per protocol). The
 // result drives the protocol tiles (unsupported ones are visibly marked) and
@@ -2006,8 +2039,10 @@ func (u *natUI) action(id string) {
 				s.OpenVPNNode = ""
 			})
 			// The region shapes only the relay: a live OpenVPN session
-			// re-applies it by reconnecting.
-			if m.connected && m.openvpn && !m.working && !m.connecting {
+			// re-applies it by reconnecting. With the exit off (which is also
+			// when this picker is most used) there is no relay to move, so
+			// saving is the whole job and the running session is left alone.
+			if u.openvpnExitActive() && !m.working && !m.connecting {
 				u.doSwitch()
 			}
 		}
@@ -2018,8 +2053,9 @@ func (u *natUI) action(id string) {
 		if m.set.PsiphonRegion != cc {
 			u.mutateSettings(func(s *clientSettings) { s.PsiphonRegion = cc })
 			// The region shapes only a Psiphon exit: like the exit switch, a
-			// live Psiphon session re-applies it by reconnecting.
-			if m.connected && m.psiphon && u.exitOK() && !m.working && !m.connecting {
+			// live Psiphon session re-applies it by reconnecting. A session
+			// without the exit keeps running untouched.
+			if u.psiphonExitActive() && !m.working && !m.connecting {
 				u.doSwitch()
 			}
 		}

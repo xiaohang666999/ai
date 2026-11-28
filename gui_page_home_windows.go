@@ -1361,7 +1361,10 @@ func (u *natUI) regionPopupRow(c *walk.Canvas, x, y, w, h float64, cc string, cu
 }
 
 // paintRegionDropdownSmall is the settings-page region control: a compact
-// edit-box-sized dropdown on one line.
+// edit-box-sized dropdown on one line. enabled gates the control itself (a
+// session that cannot stack an exit at all), never "the exit switch is on":
+// the saved region belongs to the next session that turns the exit on, so it
+// stays editable while the exit is off.
 func (u *natUI) paintRegionDropdownSmall(c *walk.Canvas, x, y, w, h float64, enabled bool) {
 	box := u.r(x, y, w, h)
 	u.fillRound(c, th.input, box, ctrlRadius)
@@ -1391,6 +1394,9 @@ func (u *natUI) paintRegionDropdownSmall(c *walk.Canvas, x, y, w, h float64, ena
 // wheel scrolls the rest (VPN Gate can expose 30+ countries).
 const vpnRegionPopupRows = 9
 
+// paintOpenVPNRegionDropdownSmall is the VPN Gate region control. As with the
+// Psiphon one, enabled gates the control (protocol/mode/core), not the exit
+// switch: the country or pinned relay can be picked before the exit is on.
 func (u *natUI) paintOpenVPNRegionDropdownSmall(c *walk.Canvas, x, y, w, h float64, enabled bool) {
 	box := u.r(x, y, w, h)
 	u.fillRound(c, th.input, box, ctrlRadius)
