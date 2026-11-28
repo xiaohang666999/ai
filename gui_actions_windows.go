@@ -234,6 +234,18 @@ func (u *natUI) actionSetting(id string) {
 			u.addLog(tr("已关闭可用性验证：下次连接将直接连接"), false)
 		}
 		return
+	case "set:dataguard":
+		// The guardian is launched per session (ensureSessionGuard at connect
+		// time), so a live session keeps the guard it already has until the
+		// next connect — the log says so rather than pretending it applied at
+		// once.
+		toggle(func(s *clientSettings) { s.AutoRepair = !s.AutoRepair })
+		if u.m.set.AutoRepair {
+			u.addLog(tr("已开启数据面守护：下次连接后将持续探测并自动修复"), false)
+		} else {
+			u.addLog(tr("已关闭数据面守护：下次连接后将不再守护，数据面失效需手动重连"), false)
+		}
+		return
 	}
 
 	if v, ok := strings.CutPrefix(id, "pickcapture:"); ok {

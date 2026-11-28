@@ -107,8 +107,9 @@ type options struct {
 	// dnsLeak routes resolver queries through the tunnel and, in TUN mode,
 	// requests the core hijack port 53.
 	dnsLeak bool
-	// noGuard turns off the background health guard: the session runs, but
-	// nothing rebuilds it if it breaks.
+	// noGuard turns off the background health guard (the settings page's
+	// "数据面守护" switch, inverted): the session runs, but nothing probes it
+	// and nothing rebuilds it if it breaks.
 	noGuard bool
 	// earlyStop, when > 0, lets a scan stop verifying once that many durable
 	// endpoints are found. Set by the connect path (the user is waiting, and a

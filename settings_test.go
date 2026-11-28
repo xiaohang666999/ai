@@ -115,6 +115,8 @@ func TestSettingsNormalize(t *testing.T) {
 // TestSettingsInternalized pins the knobs the settings page no longer exposes:
 // a hand-edited file may carry any of them, but load/save must force the shipped
 // defaults so the UI never shows a state it cannot explain or change back.
+// AutoRepair is no longer in this set: it is the exposed "数据面守护" switch and
+// is covered by TestSettingsDataGuard.
 func TestSettingsInternalized(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("WARP_CLIENT_HOME", dir)
@@ -138,8 +140,12 @@ func TestSettingsInternalized(t *testing.T) {
 	if s.MTU != 0 || s.TimeoutSec != 2 {
 		t.Errorf("mtu/timeout = %d/%d, want 0/2", s.MTU, s.TimeoutSec)
 	}
-	if s.Rescan || !s.AutoRepair {
-		t.Errorf("rescan/autoRepair = %t/%t, want false/true", s.Rescan, s.AutoRepair)
+	if s.Rescan {
+		t.Errorf("rescan = %t, want false", s.Rescan)
+	}
+	// AutoRepair is now an exposed switch: an explicit false is honoured.
+	if s.AutoRepair {
+		t.Errorf("auto repair = %t, want false (now an exposed switch)", s.AutoRepair)
 	}
 	if s.DNSCustom != "" || s.DNSOff || !s.DNSLeak {
 		t.Errorf("dns = %q/off=%t/leak=%t, want empty/false/true", s.DNSCustom, s.DNSOff, s.DNSLeak)
@@ -295,5 +301,69 @@ func TestSettingsAvailabilityGate(t *testing.T) {
 	}
 	if loadSettings().AvailabilityCheck {
 		t.Error("an explicit availability_check:false was overwritten by the default")
+	}
+}
+
+// TestSettingsDataGuard pins the "数据面守护" switch (the AutoRepair field):
+// it ships on, survives a save/load cycle in both positions, and a
+// settings.json written before the key was exposed still loads as on. The
+// connect pipeline keys its whole background health guard off it (noGuard is
+// the inverted form), so a migration default of off would silently leave every
+// upgraded install's session unattended.
+func TestSettingsDataGuard(t *testing.T) {
+	if !defaultSettings().AutoRepair {
+		t.Fatal("default data-plane guardian = false, want true")
+	}
+	// The switch reaches the connect pipeline inverted: on = guard runs
+	// (noGuard off).
+	o := defaultConnectOptions(protoAWG, false, false)
+	defaultSettings().apply(&o)
+	if o.noGuard {
+		t.Error("noGuard = true for the default settings, want false")
+	}
+
+	for _, tc := range []struct {
+		on   bool
+		want bool
+	}{
+		{false, false},
+		{true, true},
+	} {
+		dir := t.TempDir()
+		t.Setenv("WARP_CLIENT_HOME", dir)
+		in := defaultSettings()
+		in.AutoRepair = tc.on
+		if err := saveSettings(in); err != nil {
+			t.Fatalf("saveSettings: %v", err)
+		}
+		out := loadSettings()
+		if out.AutoRepair != tc.want {
+			t.Errorf("saved %t, loaded %t", tc.on, out.AutoRepair)
+		}
+		o := defaultConnectOptions(protoAWG, false, false)
+		out.apply(&o)
+		if o.noGuard != !tc.want {
+			t.Errorf("saved %t: noGuard = %t, want %t", tc.on, o.noGuard, !tc.want)
+		}
+	}
+
+	// An old file has no such key at all: the default must win.
+	dir := t.TempDir()
+	t.Setenv("WARP_CLIENT_HOME", dir)
+	legacy := `{"theme": "dark", "proto": "awg"}`
+	if err := os.WriteFile(filepath.Join(dir, settingsName), []byte(legacy), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if !loadSettings().AutoRepair {
+		t.Error("a settings.json without the key loaded data-plane guardian = false, want true")
+	}
+	// And an explicit false in the file must be honoured, not overwritten by
+	// the default (the switch is no longer internalized).
+	explicit := `{"auto_repair": false}`
+	if err := os.WriteFile(filepath.Join(dir, settingsName), []byte(explicit), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if loadSettings().AutoRepair {
+		t.Error("an explicit auto_repair:false was overwritten by the default")
 	}
 }

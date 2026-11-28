@@ -17,8 +17,8 @@ import (
 // stays put and the content is clipped to the body rectangle.
 const (
 	setCardGap  = 14.0
-	setConnBase = 306.0 // LAN sharing off: no credential rows at all
-	setConnLan  = 430.0 // sharing on: + two credential rows and the hint line
+	setConnBase = 358.0 // LAN sharing off: no credential rows at all
+	setConnLan  = 482.0 // sharing on: + two credential rows and the hint line
 	setRoutingH = 300.0
 	setExitH    = 392.0
 )
@@ -242,6 +242,17 @@ func (u *natUI) paintSetConnection(c *walk.Canvas, x, y, w float64) {
 	}
 	u.rowToggle(c, x, familyY+54, w, "set:availability", tr("连接时验证节点可用性"),
 		availSub, s.AvailabilityCheck, true)
+	// The data-plane guardian: the background health guard that probes a live
+	// session and repairs it when the data plane stops carrying traffic. Grouped
+	// with the availability gate because both are about whether the tunnel is
+	// actually carrying traffic. Off leaves the session unattended. It is a
+	// runtime concern, so the live session is unaffected until the next connect.
+	guardSub := tr("连接后持续探测数据面，失效时自动修复")
+	if !s.AutoRepair {
+		guardSub = tr("已关闭：连接后不守护，数据面失效需手动重连")
+	}
+	u.rowToggle(c, x, familyY+106, w, "set:dataguard", tr("数据面守护"),
+		guardSub, s.AutoRepair, true)
 }
 
 // captureRow is the capture-mode dropdown: system proxy or TUN device.
