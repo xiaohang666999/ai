@@ -493,7 +493,7 @@ func runConnectInner(ctx context.Context, opts options) error {
 			// exists to prevent. Whichever frontend started it, the session
 			// gets one watcher; ensureSessionGuard is idempotent, and the GUI
 			// takes ownership of its own sessions from its status loop.
-			// The settings page's "auto repair" switch is the one way out: with
+			// The settings page's "数据面守护" switch is the one way out: with
 			// it off the session simply is not watched.
 			if !opts.noGuard {
 				ensureSessionGuard(state)

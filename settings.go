@@ -84,6 +84,14 @@ type clientSettings struct {
 	// base protocol. Mutually exclusive with Psiphon — both replace the final
 	// exit, and a session can only land in one place.
 	OpenVPN    bool `json:"openvpn"`
+	// AutoRepair is the settings page's "数据面守护" switch: the background
+	// health guard that watches a live session's data plane and repairs it
+	// (rotates the endpoint, restarts Psiphon, swaps a VPN Gate relay) when it
+	// stops carrying traffic. Off means the session runs unattended — nothing
+	// probes it and nothing rebuilds it if it breaks. Defaults to true, and a
+	// settings.json written before this switch was exposed loads as true
+	// because the default struct value is not overwritten by a missing JSON
+	// key. Grouped on the settings page with AvailabilityCheck.
 	AutoRepair bool `json:"auto_repair"`
 	// PsiphonRegion is the preferred Psiphon exit country (ISO alpha-2, upper
 	// case). Empty means "automatic" — Psiphon picks the region itself.
@@ -440,7 +448,6 @@ func (s *clientSettings) normalize() {
 	s.MTU = 0
 	s.TimeoutSec = 2
 	s.Rescan = false
-	s.AutoRepair = true
 	s.DNSCustom = ""
 	s.DNSOff = false
 	s.DNSLeak = true
@@ -603,6 +610,11 @@ func (s clientSettings) apply(o *options) {
 	o.proxyMode = s.ProxyMode
 	o.domainDirect = s.domainDirectList()
 	o.domainProxy = s.domainProxyList()
+	// The "数据面守护" switch, inverted: AutoRepair on means the background
+	// health guard watches and repairs a live session; off (noGuard true)
+	// leaves it unattended. Every CLI path leaves noGuard at its zero value
+	// (guard on), which is exactly the behaviour those paths had before the
+	// switch was exposed.
 	o.noGuard = !s.AutoRepair
 	// The connect-time availability gate is the settings page's switch,
 	// inverted: every CLI path leaves skipAvailabilityCheck at its zero value

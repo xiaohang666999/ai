@@ -941,7 +941,7 @@ func (u *natUI) statusLoop() {
 			// keeps the job it already has, and this window stays a watcher.
 			// Only a session with no living owner (the guard killed outright,
 			// then no process caught it) leaves the claim free for this tick.
-			// "Auto repair" is the user's switch over all of this: off means the
+			// "数据面守护" is the user's switch over all of this: off means the
 			// session is left alone, and this window does not even claim it, so
 			// nobody else stands aside for a window that has opted out.
 			ownsHealth := false
